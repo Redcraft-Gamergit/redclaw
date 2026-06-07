@@ -3,7 +3,17 @@ FROM python:3.13-slim
 WORKDIR /app
 ENV PYTHONPATH=/app
 
-RUN apt-get update && apt-get install -y --no-install-recommends git curl ca-certificates && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends git curl ca-certificates tar && rm -rf /var/lib/apt/lists/*
+RUN set -eux; \
+    arch="$(dpkg --print-architecture)"; \
+    case "$arch" in \
+      amd64) docker_arch="x86_64" ;; \
+      arm64) docker_arch="aarch64" ;; \
+      *) echo "Unsupported Docker CLI architecture: $arch" >&2; exit 1 ;; \
+    esac; \
+    curl -fsSL "https://download.docker.com/linux/static/stable/${docker_arch}/docker-26.1.5.tgz" \
+      | tar xz --strip-components=1 -C /usr/local/bin docker/docker; \
+    chmod +x /usr/local/bin/docker
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
