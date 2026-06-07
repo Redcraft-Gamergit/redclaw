@@ -10,6 +10,8 @@ data/*.sqlite
 data/*.sqlite3
 logs/*.log
 logs/*.jsonl
+logs/*.out
+redclaw-web.pid
 redclaw.db
 *.sqlite
 *.sqlite3
