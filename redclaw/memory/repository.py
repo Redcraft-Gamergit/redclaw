@@ -77,6 +77,18 @@ class MemoryRepository:
         ).fetchall()
         return [self._row_to_item(row) for row in rows]
 
+    def recent_conversation(self, limit: int = 12) -> list[MemoryItem]:
+        rows = self.conn.execute(
+            """
+            SELECT * FROM memory
+            WHERE category = 'conversation' AND deleted_at IS NULL
+            ORDER BY created_at DESC, id DESC
+            LIMIT ?
+            """,
+            (limit,),
+        ).fetchall()
+        return [self._row_to_item(row) for row in reversed(rows)]
+
     def all(self, limit: int = 200) -> list[MemoryItem]:
         rows = self.conn.execute(
             """

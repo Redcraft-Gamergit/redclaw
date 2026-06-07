@@ -32,4 +32,5 @@ kompatibel mit dem bestehenden SkillRegistry-System.
         ],
     )
     context.logger.log("info", "codex", "Skill-Builder gestartet", {"job_id": job.id, "query": query})
+    context.memory.save("tasks", f"skill-builder:{job.id}", f"Skill-Builder Job #{job.id}: {query}", source=context.source, confidence=0.9)
     return f"Skill-Builder Job #{job.id} gestartet. Codex schreibt den Skill und führt Tests aus."

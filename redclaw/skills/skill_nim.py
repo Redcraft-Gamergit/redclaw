@@ -23,12 +23,21 @@ async def run(query, context):
     )
     max_tokens = context.settings.nvidia_nim_max_tokens if wants_long_answer else min(context.settings.nvidia_nim_max_tokens, 1024)
     enable_thinking = context.settings.nvidia_nim_enable_thinking and wants_long_answer
+    memory_context = _build_memory_context(prompt, context)
 
     endpoint = context.settings.nvidia_nim_base_url.rstrip("/") + "/chat/completions"
     payload = {
         "model": context.settings.nvidia_nim_model,
         "messages": [
-            {"role": "system", "content": "Du bist RedClaw, ein knapper deutscher Assistent. Antworte direkt, klar und ohne lange Vorrede."},
+            {
+                "role": "system",
+                "content": (
+                    "Du bist RedClaw, ein knapper deutscher Assistent für Redcrafter. "
+                    "Nutze den Memory-Kontext, um dich an frühere Nachrichten, Themen und Dateiorte zu erinnern. "
+                    "Wenn du eine Datei erwähnst, nenne den bekannten Pfad. Antworte direkt, klar und ohne lange Vorrede."
+                    f"\n\n{memory_context}"
+                ),
+            },
             {"role": "user", "content": prompt},
         ],
         "temperature": context.settings.nvidia_nim_temperature,
@@ -47,3 +56,26 @@ async def run(query, context):
     except httpx.TimeoutException:
         return "NVIDIA NIM war zu langsam. Ich habe die Anfrage abgebrochen, damit RedClaw nicht hängt. Nutze eine kürzere Frage oder deaktiviere Thinking in der Config."
     return data["choices"][0]["message"]["content"]
+
+
+def _build_memory_context(prompt: str, context) -> str:
+    lines = ["Memory-Kontext:"]
+    recent = context.memory.recent_conversation(limit=10)
+    if recent:
+        lines.append("Letzte Nachrichten:")
+        for item in recent:
+            lines.append(f"- {item.value}")
+    matches = context.memory.search(prompt, limit=8) if prompt.strip() else []
+    matches = [item for item in matches if item.category != "conversation"]
+    if matches:
+        lines.append("Relevante gespeicherte Fakten:")
+        for item in matches:
+            lines.append(f"- [{item.category}] {item.value}")
+    files = context.memory.list_by_category("files", limit=8)
+    if files:
+        lines.append("Bekannte Dateien:")
+        for item in files:
+            lines.append(f"- {item.value}")
+    if len(lines) == 1:
+        lines.append("- Noch kein Kontext gespeichert.")
+    return "\n".join(lines)

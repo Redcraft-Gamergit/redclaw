@@ -23,4 +23,5 @@ def run(query, context):
     ]
     context.logger.log("info", "codex", "Codex-Job gestartet", {"prompt": prompt})
     job = context.jobs.start("codex", command)
+    context.memory.save("tasks", f"codex-job:{job.id}", f"Codex-Job #{job.id}: {prompt}", source=context.source, confidence=0.9)
     return f"Codex-Job #{job.id} gestartet. Ich streame die Ausgabe ins Web-UI."

@@ -25,6 +25,7 @@ def run(query, context):
         if not path.exists() or not path.is_file():
             return "Diese Datei finde ich nicht."
         text = path.read_text(encoding="utf-8", errors="replace")
+        context.memory.save("files", f"read:{path}", f"Gelesene Datei: {path}", source=context.source, confidence=0.95)
         return text[:4000] if text else "Die Datei ist leer."
     if action in {"suche", "search"}:
         needle = value.lower()
@@ -38,6 +39,7 @@ def run(query, context):
                         continue
                     if needle in content or needle in path.name.lower():
                         matches.append(str(path))
+                        context.memory.save("files", f"found:{path}", f"Gefundene Datei: {path}", source=context.source, confidence=0.82)
                 if len(matches) >= 20:
                     break
         return "Treffer:\n" + "\n".join(matches) if matches else "Keine lokalen Treffer gefunden."
@@ -53,5 +55,6 @@ def run(query, context):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(content.strip(), encoding="utf-8")
         context.logger.log("info", "file", "Datei geschrieben", {"path": str(path)})
+        context.memory.save("files", f"written:{path}", f"Erstellte/geschriebene Datei: {path}", source=context.source, confidence=1.0)
         return f"Datei geschrieben: {path}"
     return "Diese Datei-Aktion kenne ich noch nicht."

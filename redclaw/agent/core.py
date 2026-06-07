@@ -36,6 +36,7 @@ class AgentCore:
     async def handle_message(self, text: str, source: str = "web") -> str:
         self.logger.log("info", "chat", "Eingang", {"source": source, "text": text})
         repeat_count = self._track_repeat(text, source)
+        self._remember_message("user", text, source)
         for category, key, value, confidence in extract_memories(text):
             self.memory.save(category, key, value, source=source, confidence=confidence)
         intent = detect_intent(text)
@@ -66,8 +67,17 @@ class AgentCore:
                 "reminder": "memory",
             }.get(intent.name, intent.name)
             result = await self.skills.run(skill_name, intent.query, context)
+        self._remember_message("assistant", result, source)
         self.logger.log("info", "chat", "Antwort", {"source": source, "text": result})
         return result
+
+    def _remember_message(self, role: str, text: str, source: str) -> None:
+        clean = re.sub(r"\s+", " ", text).strip()
+        if not clean:
+            return
+        snippet = clean[:700]
+        key = f"{int(time.time())}:{role}:{source}"
+        self.memory.save("conversation", key, f"{role}: {snippet}", source=source, confidence=0.9)
 
     def _track_repeat(self, text: str, source: str) -> int:
         normalized = re.sub(r"\s+", " ", text.lower()).strip()

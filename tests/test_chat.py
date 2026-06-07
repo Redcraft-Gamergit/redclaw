@@ -56,3 +56,11 @@ def test_chat_smalltalk(agent):
 def test_chat_calculates_simple_math(agent):
     answer = asyncio.run(agent.handle_message("was ist 1 + 1", source="discord"))
     assert answer == "1 + 1 = 2"
+
+
+def test_chat_messages_are_remembered(agent):
+    asyncio.run(agent.handle_message("was ist 1 + 1", source="discord"))
+    remembered = agent.memory.recent_conversation(limit=4)
+    values = [item.value for item in remembered]
+    assert any("user: was ist 1 + 1" in value for value in values)
+    assert any("assistant: 1 + 1 = 2" in value for value in values)

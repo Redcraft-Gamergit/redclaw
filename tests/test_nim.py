@@ -6,6 +6,12 @@ from types import SimpleNamespace
 from redclaw.skills import skill_nim
 
 
+class FakeMemoryItem:
+    def __init__(self, category, value):
+        self.category = category
+        self.value = value
+
+
 class FakeResponse:
     def raise_for_status(self):
         return None
@@ -42,7 +48,17 @@ def make_context():
         nvidia_nim_enable_thinking=True,
         nvidia_nim_timeout=240,
     )
-    return SimpleNamespace(settings=settings)
+    memory = SimpleNamespace(
+        recent_conversation=lambda limit=10: [
+            FakeMemoryItem("conversation", "user: Wir bauen RedClaw"),
+            FakeMemoryItem("conversation", "assistant: Ich habe das Dashboard erstellt"),
+        ],
+        search=lambda prompt, limit=8: [FakeMemoryItem("facts", "Redcrafter nutzt Raspberry Pi 5")],
+        list_by_category=lambda category, limit=8: [FakeMemoryItem("files", "Erstellte/geschriebene Datei: /home/redcraft/redclaw_workspace/notiz.txt")]
+        if category == "files"
+        else [],
+    )
+    return SimpleNamespace(settings=settings, memory=memory)
 
 
 def test_nim_uses_fast_payload_for_normal_questions(monkeypatch):
@@ -64,3 +80,15 @@ def test_nim_allows_long_payload_for_explicit_long_answers(monkeypatch):
 
     assert FakeClient.payloads[0]["max_tokens"] == 16384
     assert FakeClient.payloads[0]["chat_template_kwargs"] == {"enable_thinking": True}
+
+
+def test_nim_includes_memory_context(monkeypatch):
+    FakeClient.payloads = []
+    monkeypatch.setattr(skill_nim.httpx, "AsyncClient", FakeClient)
+
+    asyncio.run(skill_nim.run("wo liegt die notiz?", make_context()))
+
+    system = FakeClient.payloads[0]["messages"][0]["content"]
+    assert "Wir bauen RedClaw" in system
+    assert "Raspberry Pi 5" in system
+    assert "/home/redcraft/redclaw_workspace/notiz.txt" in system
