@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
+from dotenv import load_dotenv
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -42,6 +43,7 @@ class Settings:
 
     @classmethod
     def load(cls) -> "Settings":
+        load_dotenv(PROJECT_ROOT / ".env")
         default_config = PROJECT_ROOT / "config" / "redclaw.yaml"
         if not default_config.exists():
             default_config = PROJECT_ROOT / "config" / "config.example.yaml"
