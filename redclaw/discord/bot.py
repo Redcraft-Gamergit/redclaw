@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from datetime import datetime
+import logging
 
 import discord
 
@@ -10,9 +11,13 @@ from redclaw.bootstrap import get_runtime
 
 runtime = get_runtime()
 
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+log = logging.getLogger("redclaw.discord")
+
 
 class RedClawClient(discord.Client):
     async def on_ready(self) -> None:
+        log.info("Discord-Bot bereit als %s", self.user)
         runtime.logger.log("info", "discord", "Discord-Bot bereit", {"user": str(self.user)})
         if not hasattr(self, "_reminder_task"):
             self._reminder_task = asyncio.create_task(self._reminder_loop())
@@ -29,7 +34,9 @@ class RedClawClient(discord.Client):
                 "Discord-Nachricht ignoriert",
                 {"author_id": str(message.author.id), "is_dm": is_dm},
             )
+            log.warning("Discord-Nachricht ignoriert: author_id=%s is_dm=%s", message.author.id, is_dm)
             return
+        log.info("Discord-DM von Redcrafter empfangen")
         async with message.channel.typing():
             answer = await runtime.agent.handle_message(message.content, source="discord")
         await message.channel.send(answer[:1900])
