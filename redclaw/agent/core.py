@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import ast
+import operator
+import re
+
 from redclaw.agent.intents import detect_intent
 from redclaw.agent.jobs import JobQueue
 from redclaw.agent.logging_service import LoggingService
@@ -41,7 +45,7 @@ class AgentCore:
             source=source,
         )
         if intent.name == "chat":
-            result = self._chat(text)
+            result = await self._chat(text, context)
         elif intent.name == "memory_about_user":
             result = self._memory_about_user()
         elif intent.name == "forget_memory":
@@ -62,10 +66,54 @@ class AgentCore:
         self.logger.log("info", "chat", "Antwort", {"source": source, "text": result})
         return result
 
-    def _chat(self, text: str) -> str:
-        if "hallo" in text.lower() or "hey" in text.lower():
+    async def _chat(self, text: str, context: SkillContext) -> str:
+        lowered = text.lower().strip()
+        if lowered in {"hi", "hey", "hallo", "moin", "servus"}:
             return "Hey Redcrafter. RedClaw ist wach."
-        return "Ich habe dich verstanden. Wenn du willst, kann ich suchen, Skills ausführen, Dateien prüfen, Shell-Befehle starten oder Codex beauftragen."
+        calculation = self._try_calculate(text)
+        if calculation is not None:
+            return calculation
+        if "wie geht" in lowered or "wie gehts" in lowered or "wie gehst" in lowered:
+            return "Mir geht's gut. Ich bin online, Discord sitzt, Web-UI läuft. Was machen wir als Nächstes?"
+        if self.settings.nvidia_nim_api_key and "nim" in self.skills.modules:
+            return await self.skills.run("nim", text, context)
+        return "Ich bin da. Stell mir einfach eine Frage, gib mir eine Aufgabe oder sag mir, welchen Skill ich nutzen soll."
+
+    @staticmethod
+    def _try_calculate(text: str) -> str | None:
+        expression = text.lower().strip()
+        expression = re.sub(r"^(was ist|wieviel ist|wie viel ist|rechne|berechne)\s+", "", expression)
+        expression = expression.replace("geteilt durch", "/").replace("durch", "/")
+        expression = expression.replace("plus", "+").replace("minus", "-").replace("mal", "*")
+        expression = expression.replace("x", "*").replace(",", ".").strip(" ?!.")
+        if not re.fullmatch(r"[0-9\s+\-*/().]+", expression):
+            return None
+        try:
+            tree = ast.parse(expression, mode="eval")
+            value = AgentCore._eval_math(tree.body)
+        except Exception:
+            return None
+        if isinstance(value, float) and value.is_integer():
+            value = int(value)
+        return f"{expression} = {value}"
+
+    @staticmethod
+    def _eval_math(node: ast.AST) -> int | float:
+        operators = {
+            ast.Add: operator.add,
+            ast.Sub: operator.sub,
+            ast.Mult: operator.mul,
+            ast.Div: operator.truediv,
+            ast.USub: operator.neg,
+            ast.UAdd: operator.pos,
+        }
+        if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)):
+            return node.value
+        if isinstance(node, ast.BinOp) and type(node.op) in operators:
+            return operators[type(node.op)](AgentCore._eval_math(node.left), AgentCore._eval_math(node.right))
+        if isinstance(node, ast.UnaryOp) and type(node.op) in operators:
+            return operators[type(node.op)](AgentCore._eval_math(node.operand))
+        raise ValueError("unsupported expression")
 
     def _memory_about_user(self) -> str:
         items = self.memory.all(limit=80)
