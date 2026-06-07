@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RedClaw Login</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="login-body">
+  <main class="login-shell">
+    <section class="brand-panel">
+      <div class="mark">RC</div>
+      <h1>RedClaw</h1>
+      <p>Lokaler Agent fuer Redcrafter</p>
+    </section>
+    <form class="login-card" method="post" action="/login">
+      <h2>Login</h2>
+      <label>Benutzer</label>
+      <input name="username" autocomplete="username" value="redcrafter">
+      <label>Passwort</label>
+      <input name="password" type="password" autocomplete="current-password">
+      {% if error %}<p class="error">{{ error }}</p>{% endif %}
+      <button type="submit">Einloggen</button>
+    </form>
+  </main>
+</body>
+</html>

@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RedClaw Dashboard</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="logo">RedClaw</div>
+    <a href="#chat">Chat</a>
+    <a href="#system">System</a>
+    <a href="#memory">Memory</a>
+    <a href="#skills">Skills</a>
+    <a href="#config">Config</a>
+    <a href="#logs">Logs</a>
+    <a href="/logout">Logout</a>
+  </aside>
+  <main class="app">
+    <header class="topbar">
+      <div>
+        <h1>Kontrollzentrum</h1>
+        <p>DM-only Agent, lokales Web, ueberwachte Jobs</p>
+      </div>
+      <form method="post" action="/panic">
+        <button class="danger" type="submit">Panik-Stopp</button>
+      </form>
+    </header>
+
+    <section class="hero">
+      <div>
+        <span class="status-dot"></span>
+        <h2>RedClaw ist wach.</h2>
+        <p>Workspace: {{ settings.workspace }}</p>
+      </div>
+      <div class="metrics">
+        <span>{{ skills|length }} Skills</span>
+        <span>{{ memories|length }} Fakten</span>
+        <span>{{ jobs|length }} Jobs</span>
+      </div>
+    </section>
+
+    <section id="chat" class="grid two">
+      <div class="panel chat-panel">
+        <h2>Chat</h2>
+        <div id="chatlog" class="chatlog"></div>
+        <form hx-post="/chat" hx-target="#chatlog" hx-swap="beforeend" class="chat-form">
+          <input name="message" placeholder="Frag RedClaw etwas..." autocomplete="off">
+          <button type="submit">Senden</button>
+        </form>
+      </div>
+      <div class="panel">
+        <h2>Live</h2>
+        <pre id="live" class="livebox">Warte auf Ausgaben...</pre>
+      </div>
+    </section>
+
+    <section id="system" class="panel">
+      <h2>Systemcheck</h2>
+      <div class="check-grid">
+        {% for check in checks %}
+        <div class="check {{ check.status }}">
+          <strong>{{ check.name }}</strong>
+          <span>{{ check.status }}</span>
+          <p>{{ check.detail }}</p>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section id="memory" class="panel">
+      <h2>Memory</h2>
+      <div class="table">
+        {% for item in memories %}
+        <div class="row">
+          <span>{{ item.category }}</span>
+          <strong>{{ item.key }}</strong>
+          <p>{{ item.value }}</p>
+          <form method="post" action="/memory/delete/{{ item.id }}"><button type="submit">Vergessen</button></form>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section id="skills" class="panel">
+      <h2>Skills</h2>
+      <div class="skill-grid">
+        {% for skill in skills %}
+        <div class="skill">
+          <strong>{{ skill.name }}</strong>
+          <p>{{ skill.description }}</p>
+          <small>{{ skill.permissions|join(", ") }}</small>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section id="config" class="panel">
+      <h2>Config</h2>
+      <form class="config-form" method="post" action="/config">
+        <label>Discord User-ID</label>
+        <input name="discord_user_id" value="{{ settings.discord_user_id }}">
+        <label>Brave Search API-Key</label>
+        <input name="brave_search_api_key" value="{{ settings.brave_search_api_key }}" type="password">
+        <label>NVIDIA NIM API-Key</label>
+        <input name="nvidia_nim_api_key" value="{{ settings.nvidia_nim_api_key }}" type="password">
+        <label>NVIDIA NIM Base URL</label>
+        <input name="nvidia_nim_base_url" value="{{ settings.nvidia_nim_base_url }}">
+        <label>NVIDIA NIM Modell</label>
+        <input name="nvidia_nim_model" value="{{ settings.nvidia_nim_model }}">
+        <label>Erlaubte Ordner</label>
+        <textarea name="allowed_paths">{{ settings.allowed_paths|join("\n") }}</textarea>
+        <label>Stil</label>
+        <input name="personality" value="{{ settings.personality }}">
+        <button type="submit">Speichern</button>
+      </form>
+    </section>
+
+    <section id="logs" class="panel">
+      <h2>Logs</h2>
+      <div class="log-list">
+        {% for log in logs %}
+        <div class="log-row">
+          <span>{{ log["created_at"] }}</span>
+          <strong>{{ log["kind"] }}</strong>
+          <p>{{ log["message"] }}</p>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+  </main>
+  <script>
+    const live = document.getElementById("live");
+    const protocol = location.protocol === "https:" ? "wss" : "ws";
+    const socket = new WebSocket(`${protocol}://${location.host}/ws/live`);
+    socket.onmessage = (event) => {
+      const payload = JSON.parse(event.data);
+      live.textContent += `\n[${payload.kind}] ${payload.text}`;
+      live.scrollTop = live.scrollHeight;
+    };
+  </script>
+</body>
+</html>

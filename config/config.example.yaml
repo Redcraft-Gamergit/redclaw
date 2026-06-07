@@ -1,0 +1,25 @@
+paths:
+  db: data/redclaw.db
+  logs: logs
+  workspace: /home/pi/redclaw_workspace
+  allowed_paths:
+    - /home/pi/redclaw_workspace
+discord:
+  token: ""
+  user_id: ""
+web:
+  host: 0.0.0.0
+  port: 8080
+  username: redcrafter
+  password: redclaw
+  session_secret: change-me-long-random-secret
+agent:
+  language: de
+  personality: freundlich, direkt, wachsam
+  log_retention_days: 50
+api:
+  brave_search_api_key: ""
+  nvidia_nim_api_key: ""
+  nvidia_nim_base_url: https://integrate.api.nvidia.com/v1
+  nvidia_nim_model: nvidia/llama-3.3-nemotron-super-49b-v1.5
+  codex_command: codex

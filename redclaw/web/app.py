@@ -1,0 +1,183 @@
+from __future__ import annotations
+
+import json
+import asyncio
+from pathlib import Path
+
+import yaml
+from fastapi import FastAPI, Form, Request, WebSocket, WebSocketDisconnect
+from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+
+from redclaw.agent.systemcheck import run_systemcheck
+from redclaw.bootstrap import get_runtime
+from redclaw.web.auth import SESSION_COOKIE, is_authenticated, session_token, verify_password
+from redclaw.web.voice import synthesize
+
+BASE_DIR = Path(__file__).resolve().parent
+app = FastAPI(title="RedClaw")
+app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
+templates = Jinja2Templates(directory=BASE_DIR / "templates")
+runtime = get_runtime()
+live_clients: set[WebSocket] = set()
+
+
+def _job_event(job, text: str) -> None:
+    runtime.logger.log("info", job.kind, text, {"job_id": job.id})
+    try:
+        asyncio.create_task(broadcast({"kind": job.kind, "text": text}))
+    except RuntimeError:
+        pass
+
+
+runtime.jobs.subscribe(_job_event)
+
+
+async def broadcast(payload: dict) -> None:
+    dead: list[WebSocket] = []
+    for ws in live_clients:
+        try:
+            await ws.send_text(json.dumps(payload, ensure_ascii=False))
+        except Exception:
+            dead.append(ws)
+    for ws in dead:
+        live_clients.discard(ws)
+
+
+@app.middleware("http")
+async def auth_wall(request: Request, call_next):
+    public = request.url.path.startswith("/static") or request.url.path in {"/login"}
+    if not public and not is_authenticated(request, runtime.settings):
+        return RedirectResponse("/login", status_code=303)
+    return await call_next(request)
+
+
+@app.get("/login", response_class=HTMLResponse)
+async def login_form(request: Request):
+    return templates.TemplateResponse("login.html", {"request": request, "error": ""})
+
+
+@app.post("/login")
+async def login(request: Request, username: str = Form(...), password: str = Form(...)):
+    if username == runtime.settings.admin_username and verify_password(password, runtime.settings.admin_password):
+        response = RedirectResponse("/", status_code=303)
+        response.set_cookie(SESSION_COOKIE, session_token(runtime.settings), httponly=True, samesite="strict")
+        runtime.logger.log("info", "web_login", "Login erfolgreich", {"username": username})
+        return response
+    runtime.logger.log("warn", "security", "Login fehlgeschlagen", {"username": username})
+    return templates.TemplateResponse("login.html", {"request": request, "error": "Login fehlgeschlagen"})
+
+
+@app.get("/logout")
+async def logout():
+    response = RedirectResponse("/login", status_code=303)
+    response.delete_cookie(SESSION_COOKIE)
+    return response
+
+
+@app.get("/", response_class=HTMLResponse)
+async def dashboard(request: Request):
+    checks = run_systemcheck(runtime.settings)
+    logs = runtime.memory.logs(limit=60)
+    memories = runtime.memory.all(limit=80)
+    return templates.TemplateResponse(
+        "dashboard.html",
+        {
+            "request": request,
+            "settings": runtime.settings,
+            "checks": checks,
+            "logs": logs,
+            "memories": memories,
+            "skills": runtime.skills.list(),
+            "jobs": list(runtime.jobs.jobs.values()),
+        },
+    )
+
+
+@app.post("/chat")
+async def chat(message: str = Form(...)):
+    answer = await runtime.agent.handle_message(message, source="web")
+    await broadcast({"kind": "chat", "text": answer})
+    return HTMLResponse(f"<div class='bubble user'>{message}</div><div class='bubble claw'>{answer}</div>")
+
+
+@app.post("/memory/delete/{memory_id}")
+async def delete_memory(memory_id: int):
+    runtime.memory.delete(memory_id)
+    runtime.logger.log("info", "memory", "Fakt geloescht", {"memory_id": memory_id})
+    return RedirectResponse("/", status_code=303)
+
+
+@app.post("/config")
+async def save_config(
+    discord_user_id: str = Form(""),
+    brave_search_api_key: str = Form(""),
+    nvidia_nim_api_key: str = Form(""),
+    nvidia_nim_base_url: str = Form("https://integrate.api.nvidia.com/v1"),
+    nvidia_nim_model: str = Form("nvidia/llama-3.3-nemotron-super-49b-v1.5"),
+    allowed_paths: str = Form("/home/pi/redclaw_workspace"),
+    personality: str = Form("freundlich, direkt, wachsam"),
+):
+    paths = [line.strip() for line in allowed_paths.replace(",", "\n").splitlines() if line.strip()]
+    data = {
+        "paths": {
+            "db": str(runtime.settings.db_path),
+            "logs": str(runtime.settings.log_dir),
+            "workspace": str(runtime.settings.workspace),
+            "allowed_paths": paths,
+        },
+        "discord": {"token": runtime.settings.discord_token, "user_id": discord_user_id},
+        "web": {
+            "host": runtime.settings.web_host,
+            "port": runtime.settings.web_port,
+            "username": runtime.settings.admin_username,
+            "password": runtime.settings.admin_password,
+            "session_secret": runtime.settings.session_secret,
+        },
+        "agent": {"language": runtime.settings.language, "personality": personality, "log_retention_days": runtime.settings.log_retention_days},
+        "api": {
+            "brave_search_api_key": brave_search_api_key,
+            "nvidia_nim_api_key": nvidia_nim_api_key,
+            "nvidia_nim_base_url": nvidia_nim_base_url,
+            "nvidia_nim_model": nvidia_nim_model,
+            "codex_command": runtime.settings.codex_command,
+        },
+    }
+    config_path = runtime.settings.project_root / "config" / "redclaw.yaml"
+    config_path.write_text(yaml.safe_dump(data, allow_unicode=True, sort_keys=False), encoding="utf-8")
+    runtime.settings.discord_user_id = discord_user_id
+    runtime.settings.brave_search_api_key = brave_search_api_key
+    runtime.settings.nvidia_nim_api_key = nvidia_nim_api_key
+    runtime.settings.nvidia_nim_base_url = nvidia_nim_base_url
+    runtime.settings.nvidia_nim_model = nvidia_nim_model
+    runtime.settings.allowed_paths = [Path(p) for p in paths]
+    runtime.settings.personality = personality
+    runtime.logger.log("info", "config", "Web-Config gespeichert", {"path": str(config_path)})
+    return RedirectResponse("/", status_code=303)
+
+
+@app.post("/panic")
+async def panic():
+    count = runtime.jobs.stop_all()
+    runtime.logger.log("warn", "security", "Panik-Knopf ausgeloest", {"stopped_jobs": count})
+    await broadcast({"kind": "security", "text": f"Panik-Knopf: {count} Jobs gestoppt."})
+    return RedirectResponse("/", status_code=303)
+
+
+@app.post("/voice")
+async def voice(message: str = Form(...)):
+    answer = await runtime.agent.handle_message(message, source="web_voice")
+    audio = await synthesize(answer, BASE_DIR / "static" / "audio")
+    return {"answer": answer, "audio": f"/static/audio/{audio.name}"}
+
+
+@app.websocket("/ws/live")
+async def live(ws: WebSocket):
+    await ws.accept()
+    live_clients.add(ws)
+    try:
+        while True:
+            await ws.receive_text()
+    except WebSocketDisconnect:
+        live_clients.discard(ws)
