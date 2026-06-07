@@ -3,6 +3,7 @@ from __future__ import annotations
 import ast
 import operator
 import re
+import time
 
 from redclaw.agent.intents import detect_intent
 from redclaw.agent.jobs import JobQueue
@@ -30,9 +31,11 @@ class AgentCore:
         self.permissions = permissions
         self.jobs = jobs
         self.skills = skills
+        self._last_messages: dict[str, tuple[str, float, int]] = {}
 
     async def handle_message(self, text: str, source: str = "web") -> str:
         self.logger.log("info", "chat", "Eingang", {"source": source, "text": text})
+        repeat_count = self._track_repeat(text, source)
         for category, key, value, confidence in extract_memories(text):
             self.memory.save(category, key, value, source=source, confidence=confidence)
         intent = detect_intent(text)
@@ -45,7 +48,7 @@ class AgentCore:
             source=source,
         )
         if intent.name == "chat":
-            result = await self._chat(text, context)
+            result = await self._chat(text, context, repeat_count)
         elif intent.name == "memory_about_user":
             result = self._memory_about_user()
         elif intent.name == "forget_memory":
@@ -66,9 +69,22 @@ class AgentCore:
         self.logger.log("info", "chat", "Antwort", {"source": source, "text": result})
         return result
 
-    async def _chat(self, text: str, context: SkillContext) -> str:
+    def _track_repeat(self, text: str, source: str) -> int:
+        normalized = re.sub(r"\s+", " ", text.lower()).strip()
+        now = time.monotonic()
+        last_text, last_seen, count = self._last_messages.get(source, ("", 0.0, 0))
+        if normalized and normalized == last_text and now - last_seen < 60:
+            count += 1
+        else:
+            count = 1
+        self._last_messages[source] = (normalized, now, count)
+        return count
+
+    async def _chat(self, text: str, context: SkillContext, repeat_count: int = 1) -> str:
         lowered = text.lower().strip()
         if lowered in {"hi", "hey", "hallo", "moin", "servus"}:
+            if repeat_count > 1:
+                return "Ich bin noch da. Sag mir einfach, was ich machen soll."
             return "Hey Redcrafter. RedClaw ist wach."
         calculation = self._try_calculate(text)
         if calculation is not None:

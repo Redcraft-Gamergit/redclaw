@@ -42,6 +42,12 @@ def test_chat_greeting(agent):
     assert answer == "Hey Redcrafter. RedClaw ist wach."
 
 
+def test_chat_repeated_greeting(agent):
+    asyncio.run(agent.handle_message("HEy", source="web"))
+    answer = asyncio.run(agent.handle_message("HEy", source="web"))
+    assert answer == "Ich bin noch da. Sag mir einfach, was ich machen soll."
+
+
 def test_chat_smalltalk(agent):
     answer = asyncio.run(agent.handle_message("wie gehst so", source="discord"))
     assert "Mir geht's gut" in answer

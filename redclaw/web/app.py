@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import asyncio
+from html import escape
 from datetime import datetime
 from pathlib import Path
 
@@ -123,7 +124,9 @@ async def dashboard(request: Request):
 async def chat(message: str = Form(...)):
     answer = await runtime.agent.handle_message(message, source="web")
     await broadcast({"kind": "chat", "text": answer})
-    return HTMLResponse(f"<div class='bubble user'>{message}</div><div class='bubble claw'>{answer}</div>")
+    safe_message = escape(message)
+    safe_answer = escape(answer)
+    return HTMLResponse(f"<div class='bubble user'>{safe_message}</div><div class='bubble claw'>{safe_answer}</div>")
 
 
 @app.post("/memory/delete/{memory_id}")

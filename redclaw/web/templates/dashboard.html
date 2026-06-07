@@ -159,6 +159,17 @@
 
     const chatForm = document.querySelector(".chat-form");
     const chatInput = document.querySelector("input[name='message']");
+    const sendButton = chatForm.querySelector("button[type='submit']");
+    chatForm.addEventListener("htmx:beforeRequest", () => {
+      sendButton.disabled = true;
+      sendButton.textContent = "Sende...";
+    });
+    chatForm.addEventListener("htmx:afterRequest", () => {
+      chatInput.value = "";
+      chatInput.focus();
+      sendButton.disabled = false;
+      sendButton.textContent = "Senden";
+    });
     const voiceButton = document.createElement("button");
     voiceButton.type = "button";
     voiceButton.textContent = "Voice";
