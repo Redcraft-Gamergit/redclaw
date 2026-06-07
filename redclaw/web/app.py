@@ -148,6 +148,11 @@ async def save_config(
     nvidia_nim_api_key: str = Form(""),
     nvidia_nim_base_url: str = Form("https://integrate.api.nvidia.com/v1"),
     nvidia_nim_model: str = Form("nvidia/llama-3.3-nemotron-super-49b-v1.5"),
+    nvidia_nim_max_tokens: int = Form(4096),
+    nvidia_nim_temperature: float = Form(0.7),
+    nvidia_nim_top_p: float = Form(0.95),
+    nvidia_nim_enable_thinking: str = Form("off"),
+    nvidia_nim_timeout: int = Form(120),
     allowed_paths: str = Form("/home/pi/redclaw_workspace"),
     personality: str = Form("freundlich, direkt, wachsam"),
 ):
@@ -173,6 +178,11 @@ async def save_config(
             "nvidia_nim_api_key": nvidia_nim_api_key,
             "nvidia_nim_base_url": nvidia_nim_base_url,
             "nvidia_nim_model": nvidia_nim_model,
+            "nvidia_nim_max_tokens": nvidia_nim_max_tokens,
+            "nvidia_nim_temperature": nvidia_nim_temperature,
+            "nvidia_nim_top_p": nvidia_nim_top_p,
+            "nvidia_nim_enable_thinking": nvidia_nim_enable_thinking == "on",
+            "nvidia_nim_timeout": nvidia_nim_timeout,
             "codex_command": runtime.settings.codex_command,
         },
     }
@@ -183,6 +193,11 @@ async def save_config(
     runtime.settings.nvidia_nim_api_key = nvidia_nim_api_key
     runtime.settings.nvidia_nim_base_url = nvidia_nim_base_url
     runtime.settings.nvidia_nim_model = nvidia_nim_model
+    runtime.settings.nvidia_nim_max_tokens = nvidia_nim_max_tokens
+    runtime.settings.nvidia_nim_temperature = nvidia_nim_temperature
+    runtime.settings.nvidia_nim_top_p = nvidia_nim_top_p
+    runtime.settings.nvidia_nim_enable_thinking = nvidia_nim_enable_thinking == "on"
+    runtime.settings.nvidia_nim_timeout = nvidia_nim_timeout
     runtime.settings.allowed_paths = [Path(p) for p in paths]
     runtime.settings.personality = personality
     runtime.logger.log("info", "config", "Web-Config gespeichert", {"path": str(config_path)})

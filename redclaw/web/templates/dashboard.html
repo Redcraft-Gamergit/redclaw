@@ -114,6 +114,18 @@
         <input name="nvidia_nim_base_url" value="{{ settings.nvidia_nim_base_url }}">
         <label>NVIDIA NIM Modell</label>
         <input name="nvidia_nim_model" value="{{ settings.nvidia_nim_model }}">
+        <label>NIM Max Tokens</label>
+        <input name="nvidia_nim_max_tokens" value="{{ settings.nvidia_nim_max_tokens }}" type="number" min="1">
+        <label>NIM Temperature</label>
+        <input name="nvidia_nim_temperature" value="{{ settings.nvidia_nim_temperature }}" type="number" min="0" max="2" step="0.01">
+        <label>NIM Top P</label>
+        <input name="nvidia_nim_top_p" value="{{ settings.nvidia_nim_top_p }}" type="number" min="0" max="1" step="0.01">
+        <label class="checkbox-line">
+          <input name="nvidia_nim_enable_thinking" type="checkbox" {% if settings.nvidia_nim_enable_thinking %}checked{% endif %}>
+          Thinking aktivieren
+        </label>
+        <label>NIM Timeout Sekunden</label>
+        <input name="nvidia_nim_timeout" value="{{ settings.nvidia_nim_timeout }}" type="number" min="5">
         <label>Erlaubte Ordner</label>
         <textarea name="allowed_paths">{{ settings.allowed_paths|join("\n") }}</textarea>
         <label>Stil</label>

@@ -72,6 +72,11 @@ BRAVE_SEARCH_API_KEY=
 NVIDIA_NIM_API_KEY=
 NVIDIA_NIM_BASE_URL=https://integrate.api.nvidia.com/v1
 NVIDIA_NIM_MODEL=nvidia/llama-3.3-nemotron-super-49b-v1.5
+NVIDIA_NIM_MAX_TOKENS=4096
+NVIDIA_NIM_TEMPERATURE=0.7
+NVIDIA_NIM_TOP_P=0.95
+NVIDIA_NIM_ENABLE_THINKING=false
+NVIDIA_NIM_TIMEOUT=120
 CODEX_COMMAND=codex
 REDCLAW_WORKSPACE=/home/pi/redclaw_workspace
 REDCLAW_ALLOWED_PATHS=/home/pi/redclaw_workspace
@@ -94,6 +99,7 @@ Du brauchst:
 - `NVIDIA_NIM_API_KEY`
 - `NVIDIA_NIM_BASE_URL`
 - `NVIDIA_NIM_MODEL`
+- optionale Parameter wie `NVIDIA_NIM_MAX_TOKENS`, `NVIDIA_NIM_TEMPERATURE`, `NVIDIA_NIM_TOP_P` und `NVIDIA_NIM_ENABLE_THINKING`
 
 Der NIM-Skill wird mit Nachrichten erkannt, die `NVIDIA` oder `NIM` enthalten.
 

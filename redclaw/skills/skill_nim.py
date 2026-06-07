@@ -21,12 +21,18 @@ async def run(query, context):
             {"role": "system", "content": "Du bist RedClaw, ein knapper deutscher Assistent."},
             {"role": "user", "content": prompt},
         ],
-        "temperature": 0.4,
-        "max_tokens": 700,
+        "temperature": context.settings.nvidia_nim_temperature,
+        "top_p": context.settings.nvidia_nim_top_p,
+        "max_tokens": context.settings.nvidia_nim_max_tokens,
     }
+    if context.settings.nvidia_nim_enable_thinking:
+        payload["chat_template_kwargs"] = {"enable_thinking": True}
     headers = {"Authorization": f"Bearer {context.settings.nvidia_nim_api_key}"}
-    async with httpx.AsyncClient(timeout=45) as client:
-        response = await client.post(endpoint, headers=headers, json=payload)
-        response.raise_for_status()
-        data = response.json()
+    try:
+        async with httpx.AsyncClient(timeout=context.settings.nvidia_nim_timeout) as client:
+            response = await client.post(endpoint, headers=headers, json=payload)
+            response.raise_for_status()
+            data = response.json()
+    except httpx.TimeoutException:
+        return "NVIDIA NIM hat nicht rechtzeitig geantwortet. Das Modell ist erreichbar, braucht aber länger; erhöhe `NVIDIA_NIM_TIMEOUT` oder nutze ein kleineres Modell."
     return data["choices"][0]["message"]["content"]
