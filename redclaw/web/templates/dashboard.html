@@ -3,152 +3,339 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>RedClaw Dashboard</title>
+  <title>RedClaw Command</title>
   <link rel="stylesheet" href="/static/style.css">
   <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+  <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
 </head>
 <body>
   <aside class="sidebar">
-    <div class="logo">RedClaw</div>
-    <a href="#chat">Chat</a>
-    <a href="#system">System</a>
-    <a href="#memory">Memory</a>
-    <a href="#skills">Skills</a>
-    <a href="#config">Config</a>
-    <a href="#logs">Logs</a>
-    <a href="/logout">Logout</a>
+    <div class="brand">
+      <div class="brand-mark">RC</div>
+      <div>
+        <strong>RedClaw</strong>
+        <span>Private Agent</span>
+      </div>
+    </div>
+
+    <nav class="menu" aria-label="Hauptmenü">
+      <button class="menu-item active" type="button" data-view="overview"><i data-lucide="radar"></i><span>Übersicht</span></button>
+      <button class="menu-item" type="button" data-view="chat"><i data-lucide="message-square"></i><span>Chat</span></button>
+      <button class="menu-item" type="button" data-view="system"><i data-lucide="activity"></i><span>System</span></button>
+      <button class="menu-item" type="button" data-view="memory"><i data-lucide="database"></i><span>Memory</span></button>
+      <button class="menu-item" type="button" data-view="skills"><i data-lucide="blocks"></i><span>Skills</span></button>
+      <button class="menu-item" type="button" data-view="config"><i data-lucide="settings-2"></i><span>Config</span></button>
+      <button class="menu-item" type="button" data-view="logs"><i data-lucide="scroll-text"></i><span>Logs</span></button>
+    </nav>
+
+    <div class="sidebar-foot">
+      <span class="online-pill"><span class="status-dot"></span>Online</span>
+      <a class="logout-link" href="/logout"><i data-lucide="log-out"></i><span>Logout</span></a>
+    </div>
   </aside>
+
   <main class="app">
     <header class="topbar">
       <div>
-        <h1>Kontrollzentrum</h1>
-        <p>DM-only Agent, lokales Web, überwachte Jobs</p>
+        <p class="eyebrow">RedClaw Control</p>
+        <h1 id="view-title">Übersicht</h1>
       </div>
-      <form method="post" action="/panic">
-        <button class="danger" type="submit">Panik-Stopp</button>
-      </form>
-    </header>
-
-    <section class="hero">
-      <div>
-        <span class="status-dot"></span>
-        <h2>RedClaw ist wach.</h2>
-        <p>Workspace: {{ settings.workspace }}</p>
-      </div>
-      <div class="metrics">
-        <span>{{ skills|length }} Skills</span>
-        <span>{{ memories|length }} Fakten</span>
-        <span>{{ jobs|length }} Jobs</span>
-      </div>
-    </section>
-
-    <section id="chat" class="grid two">
-      <div class="panel chat-panel">
-        <h2>Chat</h2>
-        <div id="chatlog" class="chatlog"></div>
-        <form hx-post="/chat" hx-target="#chatlog" hx-swap="beforeend" class="chat-form">
-          <input name="message" placeholder="Frag RedClaw etwas..." autocomplete="off">
-          <button type="submit">Senden</button>
+      <div class="top-actions">
+        <button class="ghost" type="button" data-view-shortcut="chat"><i data-lucide="send"></i><span>Chat öffnen</span></button>
+        <form method="post" action="/panic">
+          <button class="danger" type="submit"><i data-lucide="octagon-x"></i><span>Panik-Stopp</span></button>
         </form>
       </div>
-      <div class="panel">
-        <h2>Live</h2>
-        <pre id="live" class="livebox">Warte auf Ausgaben...</pre>
-      </div>
-    </section>
+    </header>
 
-    <section id="system" class="panel">
-      <h2>Systemcheck</h2>
-      <div class="check-grid">
-        {% for check in checks %}
-        <div class="check {{ check.status }}">
-          <strong>{{ check.name }}</strong>
-          <span>{{ check.status }}</span>
-          <p>{{ check.detail }}</p>
+    <section class="view active" data-panel="overview">
+      <div class="hero">
+        <div>
+          <p class="eyebrow">DM-only Agent</p>
+          <h2>RedClaw ist wach.</h2>
+          <p>Workspace: {{ settings.workspace }}</p>
         </div>
-        {% endfor %}
-      </div>
-    </section>
-
-    <section id="memory" class="panel">
-      <h2>Memory</h2>
-      <div class="table">
-        {% for item in memories %}
-        <div class="row">
-          <span>{{ item.category }}</span>
-          <strong>{{ item.key }}</strong>
-          <p>{{ item.value }}</p>
-          <form method="post" action="/memory/delete/{{ item.id }}"><button type="submit">Vergessen</button></form>
+        <div class="metrics">
+          <span><strong>{{ skills|length }}</strong> Skills</span>
+          <span><strong>{{ memories|length }}</strong> Fakten</span>
+          <span><strong>{{ jobs|length }}</strong> Jobs</span>
         </div>
-        {% endfor %}
+      </div>
+
+      <div class="quick-grid">
+        <button class="quick-action" type="button" data-view-shortcut="chat">
+          <i data-lucide="message-circle"></i>
+          <strong>Chat</strong>
+          <span>Direkt mit RedClaw sprechen</span>
+        </button>
+        <button class="quick-action" type="button" data-view-shortcut="skills">
+          <i data-lucide="wand-sparkles"></i>
+          <strong>Skills</strong>
+          <span>Module prüfen und schalten</span>
+        </button>
+        <button class="quick-action" type="button" data-view-shortcut="memory">
+          <i data-lucide="brain"></i>
+          <strong>Memory</strong>
+          <span>Gespeicherte Fakten ansehen</span>
+        </button>
+        <button class="quick-action" type="button" data-view-shortcut="logs">
+          <i data-lucide="terminal"></i>
+          <strong>Logs</strong>
+          <span>Aktivität live verfolgen</span>
+        </button>
+      </div>
+
+      <div class="split">
+        <section class="surface">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">System</p>
+              <h2>Schnellstatus</h2>
+            </div>
+            <button class="ghost icon-only" type="button" data-view-shortcut="system" title="System öffnen"><i data-lucide="arrow-right"></i></button>
+          </div>
+          <div class="mini-checks">
+            {% for check in checks[:6] %}
+            <div class="mini-check {{ check.status }}">
+              <span>{{ check.name }}</span>
+              <strong>{{ check.status }}</strong>
+            </div>
+            {% endfor %}
+          </div>
+        </section>
+
+        <section class="surface">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Live</p>
+              <h2>Ausgaben</h2>
+            </div>
+          </div>
+          <pre id="live" class="livebox">Warte auf Ausgaben...</pre>
+        </section>
       </div>
     </section>
 
-    <section id="skills" class="panel">
-      <h2>Skills</h2>
-      <div class="skill-grid">
-        {% for skill in skills %}
-        <div class="skill">
-          <strong>{{ skill.name }}</strong>
-          <p>{{ skill.description }}</p>
-          <small>{{ skill.permissions|join(", ") }}</small>
-          <form method="post" action="/skills/{{ skill.name }}/toggle" class="toggle-form">
-            <input type="hidden" name="enabled" value="{% if skill.enabled %}off{% else %}on{% endif %}">
-            <button type="submit">{% if skill.enabled %}Deaktivieren{% else %}Aktivieren{% endif %}</button>
+    <section class="view" data-panel="chat">
+      <div class="chat-layout">
+        <section class="surface chat-panel">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Konsole</p>
+              <h2>Chat</h2>
+            </div>
+            <span class="online-pill"><span class="status-dot"></span>Bereit</span>
+          </div>
+          <div id="chatlog" class="chatlog"></div>
+          <form hx-post="/chat" hx-target="#chatlog" hx-swap="beforeend" class="chat-form">
+            <input name="message" placeholder="Frag RedClaw etwas..." autocomplete="off">
+            <button type="submit"><i data-lucide="send"></i><span>Senden</span></button>
           </form>
-        </div>
-        {% endfor %}
+        </section>
+
+        <aside class="surface side-panel">
+          <p class="eyebrow">Werkzeuge</p>
+          <button class="tool-button" type="button" data-prompt="was ist 1 + 1"><i data-lucide="calculator"></i><span>Rechnen</span></button>
+          <button class="tool-button" type="button" data-prompt="was weißt du über mich"><i data-lucide="user-search"></i><span>Memory fragen</span></button>
+          <button class="tool-button" type="button" data-prompt="uhrzeit"><i data-lucide="clock"></i><span>Uhrzeit</span></button>
+          <button class="tool-button" type="button" id="voice-button"><i data-lucide="mic"></i><span>Voice</span></button>
+        </aside>
       </div>
     </section>
 
-    <section id="config" class="panel">
-      <h2>Config</h2>
-      <form class="config-form" method="post" action="/config">
-        <label>Discord User-ID</label>
-        <input name="discord_user_id" value="{{ settings.discord_user_id }}">
-        <label>Brave Search API-Key</label>
-        <input name="brave_search_api_key" value="{{ settings.brave_search_api_key }}" type="password">
-        <label>NVIDIA NIM API-Key</label>
-        <input name="nvidia_nim_api_key" value="{{ settings.nvidia_nim_api_key }}" type="password">
-        <label>NVIDIA NIM Base URL</label>
-        <input name="nvidia_nim_base_url" value="{{ settings.nvidia_nim_base_url }}">
-        <label>NVIDIA NIM Modell</label>
-        <input name="nvidia_nim_model" value="{{ settings.nvidia_nim_model }}">
-        <label>NIM Max Tokens</label>
-        <input name="nvidia_nim_max_tokens" value="{{ settings.nvidia_nim_max_tokens }}" type="number" min="1">
-        <label>NIM Temperature</label>
-        <input name="nvidia_nim_temperature" value="{{ settings.nvidia_nim_temperature }}" type="number" min="0" max="2" step="0.01">
-        <label>NIM Top P</label>
-        <input name="nvidia_nim_top_p" value="{{ settings.nvidia_nim_top_p }}" type="number" min="0" max="1" step="0.01">
-        <label class="checkbox-line">
-          <input name="nvidia_nim_enable_thinking" type="checkbox" {% if settings.nvidia_nim_enable_thinking %}checked{% endif %}>
-          Thinking aktivieren
-        </label>
-        <label>NIM Timeout Sekunden</label>
-        <input name="nvidia_nim_timeout" value="{{ settings.nvidia_nim_timeout }}" type="number" min="5">
-        <label>Erlaubte Ordner</label>
-        <textarea name="allowed_paths">{{ settings.allowed_paths|join("\n") }}</textarea>
-        <label>Stil</label>
-        <input name="personality" value="{{ settings.personality }}">
-        <button type="submit">Speichern</button>
-      </form>
+    <section class="view" data-panel="system">
+      <section class="surface">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Health</p>
+            <h2>Systemcheck</h2>
+          </div>
+        </div>
+        <div class="check-grid">
+          {% for check in checks %}
+          <div class="check {{ check.status }}">
+            <div>
+              <strong>{{ check.name }}</strong>
+              <span>{{ check.status }}</span>
+            </div>
+            <p>{{ check.detail }}</p>
+          </div>
+          {% endfor %}
+        </div>
+      </section>
     </section>
 
-    <section id="logs" class="panel">
-      <h2>Logs</h2>
-      <div class="log-list">
-        {% for log in logs %}
-        <div class="log-row">
-          <span>{{ log["created_at"] }}</span>
-          <strong>{{ log["kind"] }}</strong>
-          <p>{{ log["message"] }}</p>
+    <section class="view" data-panel="memory">
+      <section class="surface">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">{{ memories|length }} Fakten</p>
+            <h2>Memory</h2>
+          </div>
         </div>
-        {% endfor %}
-      </div>
+        <div class="table">
+          {% for item in memories %}
+          <div class="row memory-row">
+            <span>{{ item.category }}</span>
+            <strong>{{ item.key }}</strong>
+            <p>{{ item.value }}</p>
+            <form method="post" action="/memory/delete/{{ item.id }}">
+              <button class="ghost danger-lite" type="submit"><i data-lucide="trash-2"></i><span>Vergessen</span></button>
+            </form>
+          </div>
+          {% else %}
+          <div class="empty-state">
+            <i data-lucide="database"></i>
+            <strong>Noch keine Fakten</strong>
+            <span>RedClaw lernt aus euren Gesprächen und legt Wissen hier ab.</span>
+          </div>
+          {% endfor %}
+        </div>
+      </section>
+    </section>
+
+    <section class="view" data-panel="skills">
+      <section class="surface">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Module</p>
+            <h2>Skill-Manager</h2>
+          </div>
+        </div>
+        <div class="skill-grid">
+          {% for skill in skills %}
+          <div class="skill">
+            <div class="skill-top">
+              <strong>{{ skill.name }}</strong>
+              <span class="state {% if skill.enabled %}on{% else %}off{% endif %}">{% if skill.enabled %}aktiv{% else %}aus{% endif %}</span>
+            </div>
+            <p>{{ skill.description }}</p>
+            <small>{{ skill.permissions|join(", ") }}</small>
+            <form method="post" action="/skills/{{ skill.name }}/toggle" class="toggle-form">
+              <input type="hidden" name="enabled" value="{% if skill.enabled %}off{% else %}on{% endif %}">
+              <button class="ghost" type="submit">
+                <i data-lucide="{% if skill.enabled %}power-off{% else %}power{% endif %}"></i>
+                <span>{% if skill.enabled %}Deaktivieren{% else %}Aktivieren{% endif %}</span>
+              </button>
+            </form>
+          </div>
+          {% endfor %}
+        </div>
+      </section>
+    </section>
+
+    <section class="view" data-panel="config">
+      <section class="surface">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Einstellungen</p>
+            <h2>Config</h2>
+          </div>
+        </div>
+        <form class="config-form" method="post" action="/config">
+          <div class="form-grid">
+            <label>Discord User-ID<input name="discord_user_id" value="{{ settings.discord_user_id }}"></label>
+            <label>Brave Search API-Key<input name="brave_search_api_key" value="{{ settings.brave_search_api_key }}" type="password"></label>
+            <label>NVIDIA NIM API-Key<input name="nvidia_nim_api_key" value="{{ settings.nvidia_nim_api_key }}" type="password"></label>
+            <label>NVIDIA NIM Base URL<input name="nvidia_nim_base_url" value="{{ settings.nvidia_nim_base_url }}"></label>
+            <label>NVIDIA NIM Modell<input name="nvidia_nim_model" value="{{ settings.nvidia_nim_model }}"></label>
+            <label>NIM Max Tokens<input name="nvidia_nim_max_tokens" value="{{ settings.nvidia_nim_max_tokens }}" type="number" min="1"></label>
+            <label>NIM Temperature<input name="nvidia_nim_temperature" value="{{ settings.nvidia_nim_temperature }}" type="number" min="0" max="2" step="0.01"></label>
+            <label>NIM Top P<input name="nvidia_nim_top_p" value="{{ settings.nvidia_nim_top_p }}" type="number" min="0" max="1" step="0.01"></label>
+            <label>NIM Timeout Sekunden<input name="nvidia_nim_timeout" value="{{ settings.nvidia_nim_timeout }}" type="number" min="5"></label>
+            <label>Stil<input name="personality" value="{{ settings.personality }}"></label>
+          </div>
+          <label class="checkbox-line">
+            <input name="nvidia_nim_enable_thinking" type="checkbox" {% if settings.nvidia_nim_enable_thinking %}checked{% endif %}>
+            Thinking aktivieren
+          </label>
+          <label class="wide-label">Erlaubte Ordner<textarea name="allowed_paths">{{ settings.allowed_paths|join("\n") }}</textarea></label>
+          <button type="submit"><i data-lucide="save"></i><span>Speichern</span></button>
+        </form>
+      </section>
+    </section>
+
+    <section class="view" data-panel="logs">
+      <section class="surface">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Audit</p>
+            <h2>Logs</h2>
+          </div>
+        </div>
+        <div class="log-list">
+          {% for log in logs %}
+          <div class="log-row">
+            <span>{{ log["created_at"] }}</span>
+            <strong>{{ log["kind"] }}</strong>
+            <p>{{ log["message"] }}</p>
+          </div>
+          {% endfor %}
+        </div>
+      </section>
     </section>
   </main>
+
   <script>
+    const viewTitles = {
+      overview: "Übersicht",
+      chat: "Chat",
+      system: "System",
+      memory: "Memory",
+      skills: "Skills",
+      config: "Config",
+      logs: "Logs",
+    };
     const live = document.getElementById("live");
+    const chatLog = document.getElementById("chatlog");
+    const chatForm = document.querySelector(".chat-form");
+    const chatInput = document.querySelector("input[name='message']");
+    const sendButton = chatForm.querySelector("button[type='submit']");
+
+    function escapeHtml(value) {
+      return value.replace(/[&<>"']/g, (char) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;",
+      }[char]));
+    }
+
+    function showView(name) {
+      document.querySelectorAll("[data-panel]").forEach((panel) => panel.classList.toggle("active", panel.dataset.panel === name));
+      document.querySelectorAll(".menu-item").forEach((item) => item.classList.toggle("active", item.dataset.view === name));
+      document.getElementById("view-title").textContent = viewTitles[name] || "RedClaw";
+      history.replaceState(null, "", `#${name}`);
+      if (name === "chat") chatInput.focus();
+    }
+
+    document.querySelectorAll("[data-view], [data-view-shortcut]").forEach((control) => {
+      control.addEventListener("click", () => showView(control.dataset.view || control.dataset.viewShortcut));
+    });
+
+    document.querySelectorAll("[data-prompt]").forEach((control) => {
+      control.addEventListener("click", () => {
+        showView("chat");
+        chatInput.value = control.dataset.prompt;
+        chatInput.focus();
+      });
+    });
+
+    chatForm.addEventListener("htmx:beforeRequest", () => {
+      sendButton.disabled = true;
+      sendButton.innerHTML = '<i data-lucide="loader-circle"></i><span>Sende...</span>';
+      lucide.createIcons();
+    });
+    chatForm.addEventListener("htmx:afterRequest", () => {
+      chatInput.value = "";
+      chatInput.focus();
+      sendButton.disabled = false;
+      sendButton.innerHTML = '<i data-lucide="send"></i><span>Senden</span>';
+      chatLog.scrollTop = chatLog.scrollHeight;
+      lucide.createIcons();
+    });
+
     const protocol = location.protocol === "https:" ? "wss" : "ws";
     const socket = new WebSocket(`${protocol}://${location.host}/ws/live`);
     socket.onmessage = (event) => {
@@ -157,24 +344,7 @@
       live.scrollTop = live.scrollHeight;
     };
 
-    const chatForm = document.querySelector(".chat-form");
-    const chatInput = document.querySelector("input[name='message']");
-    const sendButton = chatForm.querySelector("button[type='submit']");
-    chatForm.addEventListener("htmx:beforeRequest", () => {
-      sendButton.disabled = true;
-      sendButton.textContent = "Sende...";
-    });
-    chatForm.addEventListener("htmx:afterRequest", () => {
-      chatInput.value = "";
-      chatInput.focus();
-      sendButton.disabled = false;
-      sendButton.textContent = "Senden";
-    });
-    const voiceButton = document.createElement("button");
-    voiceButton.type = "button";
-    voiceButton.textContent = "Voice";
-    chatForm.appendChild(voiceButton);
-    voiceButton.addEventListener("click", () => {
+    document.getElementById("voice-button").addEventListener("click", () => {
       const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!Recognition) {
         live.textContent += "\n[voice] Spracherkennung wird von diesem Browser nicht unterstützt.";
@@ -189,11 +359,15 @@
         form.append("message", text);
         const response = await fetch("/voice", { method: "POST", body: form });
         const payload = await response.json();
-        document.querySelector("#chatlog").innerHTML += `<div class="bubble user">${text}</div><div class="bubble claw">${payload.answer}</div>`;
+        chatLog.innerHTML += `<div class="bubble user">${escapeHtml(text)}</div><div class="bubble claw">${escapeHtml(payload.answer)}</div>`;
+        chatLog.scrollTop = chatLog.scrollHeight;
         new Audio(payload.audio).play();
       };
       recognition.start();
     });
+
+    showView(location.hash.replace("#", "") || "overview");
+    lucide.createIcons();
   </script>
 </body>
 </html>

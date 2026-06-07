@@ -5,23 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>RedClaw Login</title>
   <link rel="stylesheet" href="/static/style.css">
+  <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
 </head>
 <body class="login-body">
   <main class="login-shell">
     <section class="brand-panel">
       <div class="mark">RC</div>
+      <p class="eyebrow">Private Agent</p>
       <h1>RedClaw</h1>
-      <p>Lokaler Agent für Redcrafter</p>
+      <p>Lokales Kontrollzentrum für Redcrafter.</p>
     </section>
     <form class="login-card" method="post" action="/login">
-      <h2>Login</h2>
-      <label>Benutzer</label>
-      <input name="username" autocomplete="username" value="redcrafter">
-      <label>Passwort</label>
-      <input name="password" type="password" autocomplete="current-password">
+      <p class="eyebrow">Zugang</p>
+      <h2>Einloggen</h2>
+      <label>Benutzer<input name="username" autocomplete="username" value="redcrafter"></label>
+      <label>Passwort<input name="password" type="password" autocomplete="current-password"></label>
       {% if error %}<p class="error">{{ error }}</p>{% endif %}
-      <button type="submit">Einloggen</button>
+      <button type="submit"><i data-lucide="log-in"></i><span>Einloggen</span></button>
     </form>
   </main>
+  <script>lucide.createIcons();</script>
 </body>
 </html>
