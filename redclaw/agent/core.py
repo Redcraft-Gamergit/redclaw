@@ -50,6 +50,7 @@ class AgentCore:
             skill_name = {
                 "search": "search",
                 "files": "files",
+                "skill_builder": "skill_builder",
                 "shell": "shell",
                 "codex": "codex",
                 "nim": "nim",

@@ -13,7 +13,7 @@ SKILL = {
 def run(query, context):
     parts = query.split(maxsplit=2)
     if len(parts) < 2:
-        return "Datei-Skill: nutze `datei lies <pfad>` oder `datei suche <text>`."
+        return "Datei-Skill: nutze `datei lies <pfad>`, `datei suche <text>` oder `datei schreibe <pfad> :: <text>`."
     action = parts[1].lower()
     value = parts[2] if len(parts) > 2 else ""
     if action in {"lies", "read"}:
@@ -41,4 +41,17 @@ def run(query, context):
                 if len(matches) >= 20:
                     break
         return "Treffer:\n" + "\n".join(matches) if matches else "Keine lokalen Treffer gefunden."
+    if action in {"schreibe", "write"}:
+        if "::" not in value:
+            return "Nutze `datei schreibe <pfad> :: <text>`."
+        raw_path, content = value.split("::", 1)
+        path = Path(raw_path.strip())
+        decision = context.permissions.check_path(path)
+        if decision.needs_confirmation:
+            context.logger.log("warn", "security", "Datei-Schreibzugriff braucht Bestaetigung", {"path": str(path), "reason": decision.reason})
+            return f"Dafuer brauche ich erst deine Freigabe: {decision.reason}"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content.strip(), encoding="utf-8")
+        context.logger.log("info", "file", "Datei geschrieben", {"path": str(path)})
+        return f"Datei geschrieben: {path}"
     return "Diese Datei-Aktion kenne ich noch nicht."

@@ -7,4 +7,4 @@ def test_skill_registry_loads_examples():
     registry = SkillRegistry()
     registry.load()
     names = {skill["name"] for skill in registry.list()}
-    assert {"time", "system", "search", "files", "shell", "codex", "memory", "nim"}.issubset(names)
+    assert {"time", "system", "search", "files", "shell", "codex", "memory", "nim", "skill_builder"}.issubset(names)

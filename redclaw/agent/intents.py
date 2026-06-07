@@ -25,6 +25,8 @@ def detect_intent(text: str) -> Intent:
         return Intent("files", text)
     if lowered.startswith("shell ") or lowered.startswith("cmd "):
         return Intent("shell", text)
+    if "skill bauen" in lowered or "skill erstellen" in lowered or "neuen skill" in lowered:
+        return Intent("skill_builder", text)
     if "codex" in lowered:
         return Intent("codex", text)
     if "nvidia" in lowered or "nim" in lowered:

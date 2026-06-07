@@ -11,6 +11,7 @@ der konfigurierten User-ID und bietet ein dunkles lokales Web-Dashboard.
 - SQLite-Memory mit Kategorien und Vergessen-Funktion
 - Reminder ueber APScheduler
 - Plugin-/Skill-System
+- Skill-Builder, der Codex CLI neue Skills schreiben und Tests ausfuehren laesst
 - Ueberwachte Shell-Jobs mit Risk-Leveln
 - Codex CLI per `codex exec --json`
 - Brave Search API fuer Websuche

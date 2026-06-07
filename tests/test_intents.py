@@ -9,3 +9,7 @@ def test_reminder_intent():
 
 def test_nim_intent():
     assert detect_intent("Frag NVIDIA NIM nach einer Zusammenfassung").name == "nim"
+
+
+def test_skill_builder_intent():
+    assert detect_intent("Skill erstellen fuer Kalender").name == "skill_builder"
