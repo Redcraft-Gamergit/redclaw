@@ -4,7 +4,7 @@ import sys
 
 SKILL = {
     "name": "shell",
-    "description": "Startet Shell-Befehle mit Sicherheitspruefung und Live-Ausgabe.",
+    "description": "Startet Shell-Befehle mit Sicherheitsprüfung und Live-Ausgabe.",
     "permissions": ["shell"],
     "enabled": True,
 }
@@ -19,7 +19,7 @@ def run(query, context):
     if decision.level == "blocked":
         return f"Blockiert: {decision.reason}"
     if decision.needs_confirmation:
-        return f"Dafuer brauche ich deine Bestaetigung: {decision.reason}"
+        return f"Dafür brauche ich deine Bestätigung: {decision.reason}"
     runner = ["powershell", "-NoProfile", "-Command", command] if sys.platform.startswith("win") else ["/bin/bash", "-lc", command]
     job = context.jobs.start("shell", runner)
     return f"Shell-Job #{job.id} gestartet. Die Ausgabe erscheint live im Web-UI."

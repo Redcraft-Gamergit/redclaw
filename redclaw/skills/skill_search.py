@@ -4,7 +4,7 @@ import httpx
 
 SKILL = {
     "name": "search",
-    "description": "Sucht im Web ueber Brave Search API.",
+    "description": "Sucht im Web über Brave Search API.",
     "permissions": ["network"],
     "enabled": True,
 }
@@ -24,7 +24,7 @@ async def run(query, context):
     results = data.get("web", {}).get("results", [])
     if not results:
         return "Ich habe keine passenden Suchergebnisse gefunden."
-    lines = [f"Websuche fuer: {clean_query}"]
+    lines = [f"Websuche für: {clean_query}"]
     for item in results[:5]:
         title = item.get("title", "Ohne Titel")
         url = item.get("url", "")

@@ -22,7 +22,7 @@
     <header class="topbar">
       <div>
         <h1>Kontrollzentrum</h1>
-        <p>DM-only Agent, lokales Web, ueberwachte Jobs</p>
+        <p>DM-only Agent, lokales Web, überwachte Jobs</p>
       </div>
       <form method="post" action="/panic">
         <button class="danger" type="submit">Panik-Stopp</button>
@@ -154,7 +154,7 @@
     voiceButton.addEventListener("click", () => {
       const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!Recognition) {
-        live.textContent += "\n[voice] Spracherkennung wird von diesem Browser nicht unterstuetzt.";
+        live.textContent += "\n[voice] Spracherkennung wird von diesem Browser nicht unterstützt.";
         return;
       }
       const recognition = new Recognition();

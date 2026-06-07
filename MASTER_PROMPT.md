@@ -1,20 +1,20 @@
-# Master-Prompt fuer RedClaw
+# Master-Prompt für RedClaw
 
 Baue ein vollstaendiges, modular aufgebautes Python-Projekt namens `RedClaw`.
-RedClaw ist ein persoenlicher Agent fuer Redcrafter auf einem Raspberry Pi 5 mit
-16 GB RAM und Raspberry Pi OS 64-bit. Das System soll sofort lokal lauffaehig,
-Docker-faehig, ueberwachbar und sicher konfigurierbar sein.
+RedClaw ist ein persoenlicher Agent für Redcrafter auf einem Raspberry Pi 5 mit
+16 GB RAM und Raspberry Pi OS 64-bit. Das System soll sofort lokal lauffähig,
+Docker-fähig, überwachbar und sicher konfigurierbar sein.
 
 ## Hauptziel
 
-RedClaw soll nur mit Redcrafter kommunizieren, ueber Discord-DMs und ueber ein
+RedClaw soll nur mit Redcrafter kommunizieren, über Discord-DMs und über ein
 lokales Web-Interface. RedClaw hat Memory, Reminder, Skills, Websuche, lokale
 Dateisuche, Shell-Zugriff, Codex-CLI-Integration, Web-Voice und ein Dashboard
-fuer Logs, Memory, Skills, Config und Chat.
+für Logs, Memory, Skills, Config und Chat.
 
 Das Projekt muss vollstaendigen Code liefern. Keine TODOs, keine Dummy-Module,
 keine leeren Platzhalter. Beispiel-Config, Beispiel-Memory, Beispiel-Skills,
-Docker-Compose, Startbefehle und Tests muessen enthalten sein.
+Docker-Compose, Startbefehle und Tests müssen enthalten sein.
 
 ## Zielplattform
 
@@ -101,17 +101,17 @@ redclaw/
 - Nutze `discord.py`.
 - RedClaw reagiert nur auf Direktnachrichten.
 - RedClaw reagiert nur auf die konfigurierte Discord-User-ID.
-- Die Discord-User-ID wird ueber die Web-Config und Config-Datei gesetzt.
+- Die Discord-User-ID wird über die Web-Config und Config-Datei gesetzt.
 - Nachrichten anderer User oder aus Server-Channels werden ignoriert und als
   Security-Event geloggt.
-- Reminder duerfen Discord-DMs an Redcrafter senden.
+- Reminder dürfen Discord-DMs an Redcrafter senden.
 
 ### Web-Interface
 
 Baue das Web-Interface mit FastAPI, Jinja2, HTMX und WebSockets. Verwende ein
 dunkles, schlichtes Dashboard-Design. Kein React verwenden.
 
-Das Web-Interface ist nur lokal gedacht und soll nicht als oeffentliches
+Das Web-Interface ist nur lokal gedacht und soll nicht als öffentliches
 Internet-Frontend konzipiert werden.
 
 Funktionen:
@@ -121,14 +121,14 @@ Funktionen:
 - Passwort-Hashing mit `passlib` oder `bcrypt`
 - Dashboard
 - Chat-Konsole
-- Live-Logs ueber WebSocket
-- Live-Shell-Ausgaben ueber WebSocket
-- Memory-Viewer mit Suche, Kategorien und Loeschfunktion fuer einzelne Fakten
+- Live-Logs über WebSocket
+- Live-Shell-Ausgaben über WebSocket
+- Memory-Viewer mit Suche, Kategorien und Löschfunktion für einzelne Fakten
 - Skill-Manager
 - Skill aktivieren/deaktivieren
-- Skill-Ausfuehrung testen
-- Config-Seite fuer Discord-ID, erlaubte Ordner, API-Keys und RedClaw-Stil
-- API-Key-Verwaltung fuer Brave Search und optionale Dienste
+- Skill-Ausführung testen
+- Config-Seite für Discord-ID, erlaubte Ordner, API-Keys und RedClaw-Stil
+- API-Key-Verwaltung für Brave Search und optionale Dienste
 - Panik-Knopf zum Stoppen laufender Jobs
 - Systemcheck-Seite
 - Voice-Eingabe und Voice-Ausgabe
@@ -136,8 +136,8 @@ Funktionen:
 ### Voice
 
 - Web-Voice soll Sprache erkennen und RedClaw soll per Stimme antworten.
-- Fuer TTS bevorzugt `edge-tts` oder eine vergleichbare leichte Loesung.
-- Sprache ist standardmaessig Deutsch.
+- Für TTS bevorzugt `edge-tts` oder eine vergleichbare leichte Lösung.
+- Sprache ist standardmäßig Deutsch.
 - Sprache und Stil sollen konfigurierbar und im Memory speicherbar sein.
 
 ## Agent-Core
@@ -151,33 +151,33 @@ Aufgaben:
 - Memory-Extraktion
 - Memory-Suche
 - Reminder-Erkennung
-- Shell- und Dateiberechtigungen pruefen
+- Shell- und Dateiberechtigungen prüfen
 - Codex-CLI-Jobs starten
 - Logs schreiben
 - Antworten auf Deutsch generieren
 
-Der Agent soll standardmaessig Deutsch antworten. Ton und Ansprache sollen in
+Der Agent soll standardmäßig Deutsch antworten. Ton und Ansprache sollen in
 der Config und im Memory einstellbar sein.
 
 ## Memory
 
 Nutze SQLite, nicht JSON.
 
-Memory soll aus Gespraechen relevante Informationen extrahieren und in
+Memory soll aus Gesprächen relevante Informationen extrahieren und in
 Kategorien speichern. Nicht einfach nur kompletten Chatverlauf blind als Memory
 verwenden.
 
 Kategorien:
 
-- Fakten ueber Redcrafter
-- Praeferenzen
+- Fakten über Redcrafter
+- Präferenzen
 - Aufgaben
 - Projekte
 - Personen
 - technische Umgebung
 - laufende Ziele
 - Erinnerungen
-- geloeschte/vergessene Fakten
+- gelöschte/vergessene Fakten
 
 API:
 
@@ -189,9 +189,9 @@ memory.delete(memory_id)
 memory.list_by_category(category)
 ```
 
-RedClaw muss beantworten koennen:
+RedClaw muss beantworten können:
 
-- "Was weisst du ueber mich?"
+- "Was weißt du über mich?"
 - "Vergiss, dass ich X mag."
 - "Welche Aufgaben habe ich offen?"
 
@@ -199,12 +199,12 @@ RedClaw muss beantworten koennen:
 
 Nutze APScheduler.
 
-RedClaw soll Erinnerungen erkennen, speichern und ausfuehren:
+RedClaw soll Erinnerungen erkennen, speichern und ausführen:
 
 - "Erinnere mich in 10 Minuten an Tee."
 - "Erinnere mich morgen um 18 Uhr an Einkauf."
 - "Zeig mir meine Erinnerungen."
-- "Loesche Erinnerung X."
+- "Lösche Erinnerung X."
 
 Reminder werden in SQLite gespeichert und beim Start wieder geladen.
 
@@ -241,9 +241,9 @@ Neue Skills:
 
 - RedClaw darf neue Skills selbst erstellen.
 - Codex CLI darf Skill-Code direkt in `/skills` schreiben.
-- Nach jeder Skill-Erstellung oder Aenderung muessen automatische Tests laufen.
-- Neue Skills duerfen aktiviert werden.
-- Jede Skill-Aenderung wird per Git versioniert.
+- Nach jeder Skill-Erstellung oder Änderung müssen automatische Tests laufen.
+- Neue Skills dürfen aktiviert werden.
+- Jede Skill-Änderung wird per Git versioniert.
 
 ## Websuche
 
@@ -251,19 +251,19 @@ Nutze Brave Search API als Standard-Websuche.
 
 Anforderungen:
 
-- API-Key ueber Config oder Web-UI
+- API-Key über Config oder Web-UI
 - Suchergebnisse zusammenfassen
 - Quellen-URLs anzeigen
 - Webinhalte als untrusted behandeln
-- Keine Downloads von unbekannten/komischen Websites ohne Bestaetigung
+- Keine Downloads von unbekannten/komischen Websites ohne Bestätigung
 
 Optional vorbereiten:
 
-- Tavily oder Exa als spaeter aktivierbarer Spezial-Skill fuer KI-Recherche
+- Tavily oder Exa als später aktivierbarer Spezial-Skill für KI-Recherche
 
 ## Codex CLI
 
-RedClaw soll Codex CLI nutzen koennen.
+RedClaw soll Codex CLI nutzen können.
 
 Bevorzugte Nutzung:
 
@@ -271,38 +271,38 @@ Bevorzugte Nutzung:
 - Jobs laufen in einer Queue
 - Ausgabe wird live ins Web-UI gestreamt
 - Finales Ergebnis wird in Logs und optional Memory gespeichert
-- Codex darf Skills schreiben, Tests ausfuehren und Git nutzen
+- Codex darf Skills schreiben, Tests ausführen und Git nutzen
 
-Codex-Jobs sollen nicht die Discord-Antwort blockieren. Wenn ein Job laenger
+Codex-Jobs sollen nicht die Discord-Antwort blockieren. Wenn ein Job länger
 dauert, antwortet RedClaw kurz, dass der Job gestartet wurde, und meldet das
-Ergebnis spaeter.
+Ergebnis später.
 
 ## Rechte und Sicherheit
 
-RedClaw hat grundsaetzlich starke Rechte, aber alles muss ueberwacht werden.
+RedClaw hat grundsaetzlich starke Rechte, aber alles muss überwacht werden.
 
 Regeln:
 
 - Shell-Befehle sind erlaubt.
 - Dateizugriff nur in erlaubten Ordnern.
 - Start-Workspace `/home/pi/redclaw_workspace` automatisch erstellen.
-- Neue erlaubte Ordner muessen einmalig bestaetigt werden.
-- Systembefehle duerfen nach Bestaetigung ausgefuehrt werden.
-- Docker-Container duerfen nach Bestaetigung neu gebaut und gestartet werden.
+- Neue erlaubte Ordner müssen einmalig bestätigt werden.
+- Systembefehle dürfen nach Bestätigung ausgeführt werden.
+- Docker-Container dürfen nach Bestätigung neu gebaut und gestartet werden.
 - Git darf benutzt werden.
-- Gefaehrliche Aktionen brauchen Rueckfrage.
+- Gefährliche Aktionen brauchen Rueckfrage.
 - Panik-Knopf stoppt laufende Jobs.
 
-Gefaehrliche Aktionen:
+Gefährliche Aktionen:
 
 - Paketinstallation, z. B. `apt install`, `pip install`, `npm install`
-- Loeschen von Dateien oder Ordnern
-- rekursives Loeschen
+- Löschen von Dateien oder Ordnern
+- rekursives Löschen
 - systemkritische Befehle
 - Reboot oder Shutdown
 - Docker-Neubau oder Container-Neustart
 - Downloads von unbekannten oder komischen Websites
-- Aenderungen ausserhalb erlaubter Ordner
+- Änderungen ausserhalb erlaubter Ordner
 
 Implementiere `permissions.py` mit klaren Checks und Risk-Leveln:
 
@@ -312,8 +312,8 @@ Implementiere `permissions.py` mit klaren Checks und Risk-Leveln:
 
 ## Logging
 
-Logs werden 50 Tage gespeichert. Danach duerfen technische Logs automatisch
-bereinigt werden. Security-relevante Logs sollen laenger erhalten bleiben oder
+Logs werden 50 Tage gespeichert. Danach dürfen technische Logs automatisch
+bereinigt werden. Security-relevante Logs sollen länger erhalten bleiben oder
 separat markiert werden.
 
 Log-Typen:
@@ -332,7 +332,7 @@ sollen live per WebSocket sichtbar sein.
 
 ## Systemcheck
 
-Beim Start laeuft automatisch ein Systemcheck:
+Beim Start läuft automatisch ein Systemcheck:
 
 - Python-Version
 - SQLite erreichbar
@@ -349,7 +349,7 @@ Systemcheck-Ergebnisse werden im Web-UI angezeigt und geloggt.
 
 ## Docker
 
-Erstelle Docker Compose fuer:
+Erstelle Docker Compose für:
 
 - `agent`
 - `discordbot`
@@ -364,19 +364,19 @@ Gemeinsame Volumes:
 - Config
 - `/home/pi/redclaw_workspace`
 
-Docker muss fuer Raspberry Pi arm64 geeignet sein.
+Docker muss für Raspberry Pi arm64 geeignet sein.
 
 ## Tests
 
-Erstelle Tests fuer:
+Erstelle Tests für:
 
 - Memory speichern/suchen/loeschen
 - Permission-Risk-Level
-- gefaehrliche Shell-Befehle
+- gefährliche Shell-Befehle
 - erlaubte und nicht erlaubte Dateipfade
 - Skill-Loader
 - Beispiel-Skills
-- Intent-Erkennung fuer Reminder
+- Intent-Erkennung für Reminder
 
 README muss zeigen:
 
@@ -391,13 +391,13 @@ python scripts/run_systemcheck.py
 uvicorn web.app:app --host 0.0.0.0 --port 8080
 ```
 
-Und fuer Docker:
+Und für Docker:
 
 ```bash
 docker compose up --build
 ```
 
-## Qualitaetsregeln
+## Qualitätsregeln
 
 - Kein toter Code.
 - Keine TODOs.
@@ -407,15 +407,15 @@ docker compose up --build
 - Saubere Fehlerbehandlung.
 - Klare Logs.
 - Alle Module importierbar.
-- Tests muessen laufen.
-- Pi-schonend: keine schweren Frontend-Bundles, keine unnoetigen Hintergrundprozesse.
+- Tests müssen laufen.
+- Pi-schonend: keine schweren Frontend-Bundles, keine unnötigen Hintergrundprozesse.
 - UI dunkel, schlicht, funktional.
-- RedClaw ist nur fuer Redcrafter.
+- RedClaw ist nur für Redcrafter.
 
 ## Erwartetes Ergebnis
 
 Liefere ein komplettes Projekt mit Code, Tests, README, Docker Compose,
 Beispiel-Config, Beispiel-Skills und Startanleitung. Nach dem Start soll
 RedClaw lokal nutzbar sein, Web-Login anbieten, einen Systemcheck anzeigen,
-Discord-DMs verarbeiten, Memory nutzen, Skills ausfuehren, Reminder setzen,
-Websuche nutzen und Codex CLI als Job ausfuehren koennen.
+Discord-DMs verarbeiten, Memory nutzen, Skills ausführen, Reminder setzen,
+Websuche nutzen und Codex CLI als Job ausführen können.

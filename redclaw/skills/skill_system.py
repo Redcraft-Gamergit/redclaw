@@ -20,7 +20,7 @@ def _temperature() -> str:
                 return f"{values[0].current:.1f} C"
     except Exception:
         pass
-    return "nicht verfuegbar"
+    return "nicht verfügbar"
 
 
 def run(query, context):

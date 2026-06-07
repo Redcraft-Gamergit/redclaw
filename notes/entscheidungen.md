@@ -1,59 +1,59 @@
-﻿# RedClaw Entscheidungen
+# RedClaw Entscheidungen
 
 ## Identitaet
 - Name: RedClaw
-- Sprache: Deutsch als Standard, spaeter einstellbar
+- Sprache: Deutsch als Standard, später einstellbar
 - Ton/Ansprache: einstellbar und im Memory speicherbar
 
 ## Discord
 - Nur Direktnachrichten
 - Nur Redcrafter/User-ID aus Config
-- Discord-User-ID wird ueber die Web-Config einstellbar
+- Discord-User-ID wird über die Web-Config einstellbar
 
 ## Web
 - Web-Interface ja
 - Nicht aus dem Internet offen erreichbar
 - Login per Passwort
-- Web-Login nur fuer einen Benutzer: Redcrafter
+- Web-Login nur für einen Benutzer: Redcrafter
 - Web-Sprachbefehle geplant
 - Web-Voice soll Sprache erkennen und RedClaw soll auch per Stimme antworten
-- Text-to-Speech bevorzugt ueber Edge-TTS oder vergleichbar
-- Live-Ansicht fuer Aktionen/Logs
+- Text-to-Speech bevorzugt über Edge-TTS oder vergleichbar
+- Live-Ansicht für Aktionen/Logs
 - Shell-Ausgaben sollen live im Web-UI sichtbar sein
 - Panik-Knopf soll alle laufenden Jobs stoppen
 - Dark UI
 
 ## Rechte und Sicherheit
 - Shell-Befehle erlaubt
-- Alles wird ueberwacht/protokolliert
-- Gefaehrliche Aktionen brauchen Rueckfrage
+- Alles wird überwacht/protokolliert
+- Gefährliche Aktionen brauchen Rueckfrage
 - Dateirechte nur in bestimmten erlaubten Ordnern
-- Neue Ordner muessen einmalig erlaubt werden
-- Start-Ordner fuer erlaubten Dateizugriff: ja, z. B. /home/pi/redclaw_workspace
-- Systembefehle wie apt install, systemctl, Docker-Neustarts und Reboot sind nach Bestaetigung erlaubt
-- Gefaehrlich sind besonders: Paketinstallation, Loeschen, systemzerstoerende Aktionen und Downloads von unbekannten/komischen Websites
-- Docker-Container duerfen nach Bestaetigung neu gebaut und gestartet werden
-- Git darf benutzt werden, z. B. fuer Skill-Versionierung und Rollback
+- Neue Ordner müssen einmalig erlaubt werden
+- Start-Ordner für erlaubten Dateizugriff: ja, z. B. /home/pi/redclaw_workspace
+- Systembefehle wie apt install, systemctl, Docker-Neustarts und Reboot sind nach Bestätigung erlaubt
+- Gefährlich sind besonders: Paketinstallation, Löschen, systemzerstörende Aktionen und Downloads von unbekannten/komischen Websites
+- Docker-Container dürfen nach Bestätigung neu gebaut und gestartet werden
+- Git darf benutzt werden, z. B. für Skill-Versionierung und Rollback
 
 ## Memory
 - SQLite empfohlen
-- Lernt aus allen Gespraechen, extrahiert aber relevante Infos und speichert sie in Kategorien
+- Lernt aus allen Gesprächen, extrahiert aber relevante Infos und speichert sie in Kategorien
 - Vergessen-Funktion noetig
-- Einzelne Fakten muessen geloescht werden koennen
-- RedClaw soll beantworten koennen, was er ueber den User weiss
+- Einzelne Fakten müssen gelöscht werden können
+- RedClaw soll beantworten können, was er über den User weiß
 
 ## Suche und Medien
 - Lokale Dateisuche ist erlaubt
-- Websuche ueber API
-- Bilder und Screenshots sollen spaeter verstanden werden
+- Websuche über API
+- Bilder und Screenshots sollen später verstanden werden
 
 ## Skills
-- Skills koennen ueber Web-UI verwaltet werden
-- RedClaw soll Skills selbst erstellen koennen
+- Skills können über Web-UI verwaltet werden
+- RedClaw soll Skills selbst erstellen können
 - Codex CLI kann Skill-Code erzeugen
-- Neue Skills duerfen direkt in /skills geschrieben werden
-- Nach neuen oder geaenderten Skills muessen automatisch Tests laufen
-- Neue Skills duerfen aktiviert werden
+- Neue Skills dürfen direkt in /skills geschrieben werden
+- Nach neuen oder geänderten Skills müssen automatisch Tests laufen
+- Neue Skills dürfen aktiviert werden
 
 ## System
 - Zielgeraet: Raspberry Pi 5, 16 GB RAM

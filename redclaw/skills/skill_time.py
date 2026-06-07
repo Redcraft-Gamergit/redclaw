@@ -5,7 +5,7 @@ from zoneinfo import ZoneInfo
 
 SKILL = {
     "name": "time",
-    "description": "Gibt Datum und Uhrzeit fuer Berlin aus.",
+    "description": "Gibt Datum und Uhrzeit für Berlin aus.",
     "permissions": [],
     "enabled": True,
 }

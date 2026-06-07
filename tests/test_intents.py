@@ -12,4 +12,4 @@ def test_nim_intent():
 
 
 def test_skill_builder_intent():
-    assert detect_intent("Skill erstellen fuer Kalender").name == "skill_builder"
+    assert detect_intent("Skill erstellen für Kalender").name == "skill_builder"

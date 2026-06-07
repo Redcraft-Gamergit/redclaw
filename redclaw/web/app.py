@@ -72,7 +72,7 @@ async def _reminder_loop() -> None:
             text = f"Reminder: {row['text']}"
             runtime.memory.conn.execute("UPDATE reminders SET done = 1 WHERE id = ?", (row["id"],))
             runtime.memory.conn.commit()
-            runtime.logger.log("info", "reminder", "Reminder faellig", {"text": row["text"]})
+            runtime.logger.log("info", "reminder", "Reminder fällig", {"text": row["text"]})
             await broadcast({"kind": "reminder", "text": text})
         await asyncio.sleep(10)
 
@@ -129,7 +129,7 @@ async def chat(message: str = Form(...)):
 @app.post("/memory/delete/{memory_id}")
 async def delete_memory(memory_id: int):
     runtime.memory.delete(memory_id)
-    runtime.logger.log("info", "memory", "Fakt geloescht", {"memory_id": memory_id})
+    runtime.logger.log("info", "memory", "Fakt gelöscht", {"memory_id": memory_id})
     return RedirectResponse("/", status_code=303)
 
 
@@ -137,7 +137,7 @@ async def delete_memory(memory_id: int):
 async def toggle_skill(skill_name: str, enabled: str = Form("off")):
     is_enabled = enabled == "on"
     if runtime.skills.set_enabled(skill_name, is_enabled):
-        runtime.logger.log("info", "skill", "Skill-Status geaendert", {"skill": skill_name, "enabled": is_enabled})
+        runtime.logger.log("info", "skill", "Skill-Status geändert", {"skill": skill_name, "enabled": is_enabled})
     return RedirectResponse("/", status_code=303)
 
 
@@ -192,7 +192,7 @@ async def save_config(
 @app.post("/panic")
 async def panic():
     count = runtime.jobs.stop_all()
-    runtime.logger.log("warn", "security", "Panik-Knopf ausgeloest", {"stopped_jobs": count})
+    runtime.logger.log("warn", "security", "Panik-Knopf ausgelöst", {"stopped_jobs": count})
     await broadcast({"kind": "security", "text": f"Panik-Knopf: {count} Jobs gestoppt."})
     return RedirectResponse("/", status_code=303)
 

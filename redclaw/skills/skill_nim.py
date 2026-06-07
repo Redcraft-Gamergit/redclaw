@@ -4,7 +4,7 @@ import httpx
 
 SKILL = {
     "name": "nim",
-    "description": "Nutzt NVIDIA NIM ueber den OpenAI-kompatiblen Chat-Endpunkt.",
+    "description": "Nutzt NVIDIA NIM über den OpenAI-kompatiblen Chat-Endpunkt.",
     "permissions": ["network", "llm"],
     "enabled": True,
 }

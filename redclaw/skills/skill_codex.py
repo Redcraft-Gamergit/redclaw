@@ -2,7 +2,7 @@ from __future__ import annotations
 
 SKILL = {
     "name": "codex",
-    "description": "Startet Codex CLI als ueberwachten Job.",
+    "description": "Startet Codex CLI als überwachten Job.",
     "permissions": ["codex", "shell"],
     "enabled": True,
 }

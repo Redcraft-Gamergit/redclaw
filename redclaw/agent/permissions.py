@@ -62,11 +62,11 @@ class PermissionService:
             return PermissionDecision("blocked", "Leerer Befehl.")
         joined = " ".join(lowered)
         if ":(){:|:&};:" in joined or "format c:" in joined or "mkfs" in lowered:
-            return PermissionDecision("blocked", "Befehl wirkt systemzerstoerend.")
+            return PermissionDecision("blocked", "Befehl wirkt systemzerstörend.")
         if any(token in lowered for token in INSTALL_TOKENS):
-            return PermissionDecision("needs_confirmation", "Paketinstallation braucht Bestaetigung.")
+            return PermissionDecision("needs_confirmation", "Paketinstallation braucht Bestätigung.")
         if any(token.lower() in lowered for token in DANGEROUS_TOKENS):
-            return PermissionDecision("needs_confirmation", "Gefaehrlicher System-, Docker-, Download- oder Loeschbefehl.")
+            return PermissionDecision("needs_confirmation", "Gefährlicher System-, Docker-, Download- oder Löschbefehl.")
         if ">" in parts or ">>" in parts:
-            return PermissionDecision("needs_confirmation", "Umleitung kann Dateien ueberschreiben.")
+            return PermissionDecision("needs_confirmation", "Umleitung kann Dateien überschreiben.")
         return PermissionDecision("safe", "Befehl ist nach Regelwerk unkritisch.")
