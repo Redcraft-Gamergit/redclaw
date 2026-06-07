@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import asyncio
+from datetime import datetime
 from pathlib import Path
 
 import yaml
@@ -21,6 +22,7 @@ app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 templates = Jinja2Templates(directory=BASE_DIR / "templates")
 runtime = get_runtime()
 live_clients: set[WebSocket] = set()
+reminder_task: asyncio.Task | None = None
 
 
 def _job_event(job, text: str) -> None:
@@ -51,6 +53,28 @@ async def auth_wall(request: Request, call_next):
     if not public and not is_authenticated(request, runtime.settings):
         return RedirectResponse("/login", status_code=303)
     return await call_next(request)
+
+
+@app.on_event("startup")
+async def startup() -> None:
+    global reminder_task
+    if reminder_task is None:
+        reminder_task = asyncio.create_task(_reminder_loop())
+
+
+async def _reminder_loop() -> None:
+    while True:
+        rows = runtime.memory.conn.execute(
+            "SELECT * FROM reminders WHERE done = 0 AND due_at <= ? ORDER BY due_at ASC",
+            (datetime.utcnow().isoformat(),),
+        ).fetchall()
+        for row in rows:
+            text = f"Reminder: {row['text']}"
+            runtime.memory.conn.execute("UPDATE reminders SET done = 1 WHERE id = ?", (row["id"],))
+            runtime.memory.conn.commit()
+            runtime.logger.log("info", "reminder", "Reminder faellig", {"text": row["text"]})
+            await broadcast({"kind": "reminder", "text": text})
+        await asyncio.sleep(10)
 
 
 @app.get("/login", response_class=HTMLResponse)
@@ -106,6 +130,14 @@ async def chat(message: str = Form(...)):
 async def delete_memory(memory_id: int):
     runtime.memory.delete(memory_id)
     runtime.logger.log("info", "memory", "Fakt geloescht", {"memory_id": memory_id})
+    return RedirectResponse("/", status_code=303)
+
+
+@app.post("/skills/{skill_name}/toggle")
+async def toggle_skill(skill_name: str, enabled: str = Form("off")):
+    is_enabled = enabled == "on"
+    if runtime.skills.set_enabled(skill_name, is_enabled):
+        runtime.logger.log("info", "skill", "Skill-Status geaendert", {"skill": skill_name, "enabled": is_enabled})
     return RedirectResponse("/", status_code=303)
 
 

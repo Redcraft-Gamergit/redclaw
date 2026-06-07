@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from datetime import datetime
 
 import discord
 
@@ -13,6 +14,8 @@ runtime = get_runtime()
 class RedClawClient(discord.Client):
     async def on_ready(self) -> None:
         runtime.logger.log("info", "discord", "Discord-Bot bereit", {"user": str(self.user)})
+        if not hasattr(self, "_reminder_task"):
+            self._reminder_task = asyncio.create_task(self._reminder_loop())
 
     async def on_message(self, message: discord.Message) -> None:
         if message.author.bot:
@@ -30,6 +33,21 @@ class RedClawClient(discord.Client):
         async with message.channel.typing():
             answer = await runtime.agent.handle_message(message.content, source="discord")
         await message.channel.send(answer[:1900])
+
+    async def _reminder_loop(self) -> None:
+        await self.wait_until_ready()
+        while not self.is_closed():
+            rows = runtime.memory.conn.execute(
+                "SELECT * FROM reminders WHERE done = 0 AND due_at <= ? ORDER BY due_at ASC",
+                (datetime.utcnow().isoformat(),),
+            ).fetchall()
+            for row in rows:
+                user = await self.fetch_user(int(runtime.settings.discord_user_id))
+                await user.send(f"Reminder: {row['text']}")
+                runtime.memory.conn.execute("UPDATE reminders SET done = 1 WHERE id = ?", (row["id"],))
+                runtime.memory.conn.commit()
+                runtime.logger.log("info", "reminder", "Discord-Reminder gesendet", {"text": row["text"]})
+            await asyncio.sleep(10)
 
 
 async def main() -> None:

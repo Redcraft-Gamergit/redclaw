@@ -92,6 +92,10 @@
           <strong>{{ skill.name }}</strong>
           <p>{{ skill.description }}</p>
           <small>{{ skill.permissions|join(", ") }}</small>
+          <form method="post" action="/skills/{{ skill.name }}/toggle" class="toggle-form">
+            <input type="hidden" name="enabled" value="{% if skill.enabled %}off{% else %}on{% endif %}">
+            <button type="submit">{% if skill.enabled %}Deaktivieren{% else %}Aktivieren{% endif %}</button>
+          </form>
         </div>
         {% endfor %}
       </div>
@@ -140,6 +144,33 @@
       live.textContent += `\n[${payload.kind}] ${payload.text}`;
       live.scrollTop = live.scrollHeight;
     };
+
+    const chatForm = document.querySelector(".chat-form");
+    const chatInput = document.querySelector("input[name='message']");
+    const voiceButton = document.createElement("button");
+    voiceButton.type = "button";
+    voiceButton.textContent = "Voice";
+    chatForm.appendChild(voiceButton);
+    voiceButton.addEventListener("click", () => {
+      const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!Recognition) {
+        live.textContent += "\n[voice] Spracherkennung wird von diesem Browser nicht unterstuetzt.";
+        return;
+      }
+      const recognition = new Recognition();
+      recognition.lang = "de-DE";
+      recognition.onresult = async (event) => {
+        const text = event.results[0][0].transcript;
+        chatInput.value = text;
+        const form = new FormData();
+        form.append("message", text);
+        const response = await fetch("/voice", { method: "POST", body: form });
+        const payload = await response.json();
+        document.querySelector("#chatlog").innerHTML += `<div class="bubble user">${text}</div><div class="bubble claw">${payload.answer}</div>`;
+        new Audio(payload.audio).play();
+      };
+      recognition.start();
+    });
   </script>
 </body>
 </html>

@@ -100,7 +100,7 @@ textarea {
   background: #080a0e;
   padding: 12px;
 }
-.chat-form { display: grid; grid-template-columns: 1fr auto; gap: 10px; margin-top: 12px; }
+.chat-form { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; margin-top: 12px; }
 .bubble { padding: 10px 12px; border-radius: 8px; margin-bottom: 8px; white-space: pre-wrap; }
 .bubble.user { background: #1d2430; }
 .bubble.claw { background: rgba(240, 68, 56, .16); border: 1px solid rgba(240, 68, 56, .28); }
@@ -116,6 +116,7 @@ textarea {
 .check.warn span { color: var(--amber); }
 .check.error span { color: var(--red-2); }
 .skill-grid { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.toggle-form { margin-top: 12px; }
 .table, .log-list { display: grid; gap: 10px; }
 .config-form { display: grid; gap: 10px; max-width: 760px; }
 .row { display: grid; grid-template-columns: 120px 180px 1fr auto; gap: 12px; align-items: center; }

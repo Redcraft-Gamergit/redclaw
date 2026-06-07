@@ -19,6 +19,7 @@ class Runtime:
         self.settings = settings
         self.conn = connect(settings.db_path)
         self.memory = MemoryRepository(self.conn)
+        self.memory.cleanup_logs(settings.log_retention_days)
         self.logger = LoggingService(self.memory, settings.log_dir)
         self.permissions = PermissionService(settings.allowed_paths)
         self.jobs = JobQueue()

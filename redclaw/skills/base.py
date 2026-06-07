@@ -29,6 +29,7 @@ class SkillRegistry:
     def __init__(self, package: str = "redclaw.skills"):
         self.package = package
         self.modules: dict[str, ModuleType] = {}
+        self.disabled: set[str] = set()
 
     def load(self) -> None:
         package_module = importlib.import_module(self.package)
@@ -41,6 +42,15 @@ class SkillRegistry:
             name = meta.get("name", module_info.name.replace("skill_", ""))
             self.modules[name] = module
 
+    def set_enabled(self, name: str, enabled: bool) -> bool:
+        if name not in self.modules:
+            return False
+        if enabled:
+            self.disabled.discard(name)
+        else:
+            self.disabled.add(name)
+        return True
+
     def list(self) -> list[dict[str, Any]]:
         skills: list[dict[str, Any]] = []
         for name, module in sorted(self.modules.items()):
@@ -50,7 +60,7 @@ class SkillRegistry:
                     "name": name,
                     "description": meta.get("description", ""),
                     "permissions": meta.get("permissions", []),
-                    "enabled": meta.get("enabled", True),
+                    "enabled": meta.get("enabled", True) and name not in self.disabled,
                 }
             )
         return skills
@@ -61,7 +71,7 @@ class SkillRegistry:
             context.logger.log("warn", "skill", "Skill nicht gefunden", {"skill": name})
             return f"Ich finde den Skill `{name}` nicht."
         meta = getattr(module, "SKILL", {})
-        if meta.get("enabled", True) is False:
+        if meta.get("enabled", True) is False or name in self.disabled:
             return f"Der Skill `{name}` ist deaktiviert."
         context.logger.log("info", "skill", "Skill gestartet", {"skill": name, "query": query})
         run = getattr(module, "run")
