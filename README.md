@@ -73,6 +73,8 @@ NVIDIA_NIM_API_KEY=
 NVIDIA_NIM_BASE_URL=https://integrate.api.nvidia.com/v1
 NVIDIA_NIM_MODEL=nvidia/llama-3.3-nemotron-super-49b-v1.5
 CODEX_COMMAND=codex
+REDCLAW_WORKSPACE=/home/pi/redclaw_workspace
+REDCLAW_ALLOWED_PATHS=/home/pi/redclaw_workspace
 ```
 
 Die gleiche Konfiguration kann im Web-Dashboard unter `Config` gespeichert
