@@ -11,7 +11,7 @@ RUN set -eux; \
       arm64) docker_arch="aarch64" ;; \
       *) echo "Unsupported Docker CLI architecture: $arch" >&2; exit 1 ;; \
     esac; \
-    curl -fsSL "https://download.docker.com/linux/static/stable/${docker_arch}/docker-26.1.5.tgz" \
+    curl -fsSL "https://download.docker.com/linux/static/stable/${docker_arch}/docker-29.5.3.tgz" \
       | tar xz --strip-components=1 -C /usr/local/bin docker/docker; \
     chmod +x /usr/local/bin/docker
 COPY requirements.txt .
