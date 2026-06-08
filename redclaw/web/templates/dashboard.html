@@ -57,7 +57,7 @@
         </div>
         <div class="metrics">
           <span><strong>{{ skills|length }}</strong> Skills</span>
-          <span><strong>{{ memories|length }}</strong> Fakten</span>
+          <span><strong>{{ memory_stats.total }}</strong> Memorys</span>
           <span><strong>{{ jobs|length }}</strong> Jobs</span>
         </div>
       </div>
@@ -169,26 +169,42 @@
       <section class="surface">
         <div class="section-head">
           <div>
-            <p class="eyebrow">{{ memories|length }} Fakten</p>
+            <p class="eyebrow">{{ memory_stats.total }} Eintraege</p>
             <h2>Memory</h2>
           </div>
         </div>
-        <div class="table">
-          {% for item in memories %}
-          <div class="row memory-row">
-            <span>{{ item.category }}</span>
-            <strong>{{ item.key }}</strong>
-            <p>{{ item.value }}</p>
-            <form method="post" action="/memory/delete/{{ item.id }}">
-              <button class="ghost danger-lite" type="submit"><i data-lucide="trash-2"></i><span>Vergessen</span></button>
-            </form>
-          </div>
-          {% else %}
-          <div class="empty-state">
-            <i data-lucide="database"></i>
-            <strong>Noch keine Fakten</strong>
+        <div class="memory-tabs" aria-label="Memory Kategorien">
+          <button class="memory-tab active" type="button" data-memory-tab="conversation"><i data-lucide="messages-square"></i><span>Gespraeche</span><strong>{{ memory_groups.conversation|length }}</strong></button>
+          <button class="memory-tab" type="button" data-memory-tab="facts"><i data-lucide="badge-info"></i><span>Fakten</span><strong>{{ memory_groups.facts|length }}</strong></button>
+          <button class="memory-tab" type="button" data-memory-tab="preferences"><i data-lucide="heart"></i><span>Vorlieben</span><strong>{{ memory_groups.preferences|length }}</strong></button>
+          <button class="memory-tab" type="button" data-memory-tab="tasks"><i data-lucide="list-checks"></i><span>Aufgaben</span><strong>{{ memory_groups.tasks|length }}</strong></button>
+          <button class="memory-tab" type="button" data-memory-tab="files"><i data-lucide="folder-open"></i><span>Dateien</span><strong>{{ memory_groups.files|length }}</strong></button>
+          <button class="memory-tab" type="button" data-memory-tab="projects"><i data-lucide="boxes"></i><span>Projekte</span><strong>{{ memory_groups.projects|length }}</strong></button>
+          <button class="memory-tab" type="button" data-memory-tab="other"><i data-lucide="archive"></i><span>Sonstiges</span><strong>{{ memory_groups.other|length }}</strong></button>
+        </div>
+
+        <div class="memory-panels">
+          {% for group_name, group_items in memory_groups.items() %}
+          <div class="memory-panel {% if group_name == 'conversation' %}active{% endif %}" data-memory-panel="{{ group_name }}">
+            {% for item in group_items %}
+            <article class="memory-card">
+              <div class="memory-meta">
+                <span>{{ item.category }}</span>
+                <time>{{ item.created_at }}</time>
+              </div>
+              <strong>{{ item.key }}</strong>
+              <p>{{ item.value }}</p>
+              <form method="post" action="/memory/delete/{{ item.id }}">
+                <button class="ghost danger-lite" type="submit"><i data-lucide="trash-2"></i><span>Vergessen</span></button>
+              </form>
+            </article>
+            {% else %}
+            <div class="empty-state">
+              <i data-lucide="database"></i>
+              <strong>Noch nichts gespeichert</strong>
             <span>RedClaw lernt aus euren Gesprächen und legt Wissen hier ab.</span>
           </div>
+          {% endfor %}
           {% endfor %}
         </div>
       </section>
@@ -319,6 +335,14 @@
         showView("chat");
         chatInput.value = control.dataset.prompt;
         chatInput.focus();
+      });
+    });
+
+    document.querySelectorAll("[data-memory-tab]").forEach((tab) => {
+      tab.addEventListener("click", () => {
+        const name = tab.dataset.memoryTab;
+        document.querySelectorAll("[data-memory-tab]").forEach((item) => item.classList.toggle("active", item === tab));
+        document.querySelectorAll("[data-memory-panel]").forEach((panel) => panel.classList.toggle("active", panel.dataset.memoryPanel === name));
       });
     });
 

@@ -22,6 +22,81 @@ CREATE TABLE IF NOT EXISTS memory (
 CREATE INDEX IF NOT EXISTS idx_memory_category ON memory(category);
 CREATE INDEX IF NOT EXISTS idx_memory_key ON memory(key);
 
+CREATE TABLE IF NOT EXISTS conversation_memory (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    memory_id INTEGER,
+    role TEXT NOT NULL,
+    source TEXT,
+    message TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TEXT,
+    FOREIGN KEY(memory_id) REFERENCES memory(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_conversation_memory_source_created ON conversation_memory(source, created_at);
+
+CREATE TABLE IF NOT EXISTS fact_memory (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    memory_id INTEGER,
+    fact_key TEXT NOT NULL,
+    fact_value TEXT NOT NULL,
+    source TEXT,
+    confidence REAL NOT NULL DEFAULT 1.0,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TEXT,
+    FOREIGN KEY(memory_id) REFERENCES memory(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_fact_memory_key ON fact_memory(fact_key);
+
+CREATE TABLE IF NOT EXISTS preference_memory (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    memory_id INTEGER,
+    preference_key TEXT NOT NULL,
+    preference_value TEXT NOT NULL,
+    source TEXT,
+    confidence REAL NOT NULL DEFAULT 1.0,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TEXT,
+    FOREIGN KEY(memory_id) REFERENCES memory(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_preference_memory_key ON preference_memory(preference_key);
+
+CREATE TABLE IF NOT EXISTS task_memory (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    memory_id INTEGER,
+    task_key TEXT NOT NULL,
+    task_value TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'open',
+    source TEXT,
+    confidence REAL NOT NULL DEFAULT 1.0,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TEXT,
+    FOREIGN KEY(memory_id) REFERENCES memory(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_task_memory_status ON task_memory(status);
+
+CREATE TABLE IF NOT EXISTS file_memory (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    memory_id INTEGER,
+    path TEXT NOT NULL,
+    action TEXT NOT NULL,
+    note TEXT NOT NULL DEFAULT '',
+    source TEXT,
+    confidence REAL NOT NULL DEFAULT 1.0,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TEXT,
+    FOREIGN KEY(memory_id) REFERENCES memory(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_file_memory_path ON file_memory(path);
+
 CREATE TABLE IF NOT EXISTS logs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     level TEXT NOT NULL,

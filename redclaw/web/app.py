@@ -106,6 +106,8 @@ async def dashboard(request: Request):
     checks = run_systemcheck(runtime.settings)
     logs = runtime.memory.logs(limit=60)
     memories = runtime.memory.all(limit=80)
+    memory_groups = runtime.memory.grouped(limit_per_group=50)
+    memory_stats = runtime.memory.stats()
     return templates.TemplateResponse(
         "dashboard.html",
         {
@@ -114,6 +116,8 @@ async def dashboard(request: Request):
             "checks": checks,
             "logs": logs,
             "memories": memories,
+            "memory_groups": memory_groups,
+            "memory_stats": memory_stats,
             "skills": runtime.skills.list(),
             "jobs": list(runtime.jobs.jobs.values()),
         },
