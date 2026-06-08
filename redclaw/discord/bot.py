@@ -32,14 +32,19 @@ class RedClawClient(discord.Client):
             and runtime.settings.discord_allow_test_bots
             and author_id == str(runtime.settings.discord_test_user_id)
         )
+        allowed_test_channel = (
+            allowed_test_bot
+            and runtime.settings.discord_test_channel_id
+            and str(message.channel.id) == str(runtime.settings.discord_test_channel_id)
+        )
         if message.author.bot and not allowed_test_bot:
             return
-        if not is_dm or not (allowed_user or allowed_test_bot):
+        if not ((is_dm and (allowed_user or allowed_test_bot)) or allowed_test_channel):
             runtime.logger.log(
                 "warn",
                 "security",
                 "Discord-Nachricht ignoriert",
-                {"author_id": author_id, "is_dm": is_dm},
+                {"author_id": author_id, "is_dm": is_dm, "channel_id": str(message.channel.id)},
             )
             log.warning("Discord-Nachricht ignoriert: author_id=%s is_dm=%s", message.author.id, is_dm)
             return

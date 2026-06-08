@@ -29,6 +29,9 @@ def detect_intent(text: str) -> Intent:
         or "schreibe datei" in lowered
         or "sende datei" in lowered
         or "schick datei" in lowered
+        or "liste dateien" in lowered
+        or "dateien liste" in lowered
+        or "datei info" in lowered
     ):
         return Intent("files", text)
     if lowered.startswith("shell ") or lowered.startswith("cmd "):

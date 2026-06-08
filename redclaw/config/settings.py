@@ -28,6 +28,7 @@ class Settings:
     discord_user_id: str = ""
     discord_test_user_id: str = ""
     discord_allow_test_bots: bool = False
+    discord_test_channel_id: str = ""
     discord_token: str = ""
     brave_search_api_key: str = ""
     nvidia_nim_api_key: str = ""
@@ -79,6 +80,7 @@ class Settings:
             discord_user_id=str(os.getenv("REDSCRAFTER_DISCORD_ID", discord.get("user_id", ""))),
             discord_test_user_id=str(os.getenv("DISCORD_TEST_USER_ID", discord.get("test_user_id", ""))),
             discord_allow_test_bots=str(os.getenv("DISCORD_ALLOW_TEST_BOTS", discord.get("allow_test_bots", False))).lower() in {"1", "true", "yes", "on"},
+            discord_test_channel_id=str(os.getenv("DISCORD_TEST_CHANNEL_ID", discord.get("test_channel_id", ""))),
             discord_token=os.getenv("DISCORD_TOKEN", discord.get("token", "")),
             brave_search_api_key=os.getenv("BRAVE_SEARCH_API_KEY", api.get("brave_search_api_key", "")),
             nvidia_nim_api_key=os.getenv("NVIDIA_NIM_API_KEY", api.get("nvidia_nim_api_key", "")),

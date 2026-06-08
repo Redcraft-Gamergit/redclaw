@@ -15,7 +15,7 @@ def run(query, context):
     query = _normalize_query(query)
     parts = query.split(maxsplit=2)
     if len(parts) < 2:
-        return "Datei-Skill: nutze `datei lies <pfad>`, `datei suche <text>`, `datei schreibe <pfad> :: <text>` oder `datei sende <pfad>`."
+        return "Datei-Skill: nutze `datei lies <pfad>`, `datei suche <text>`, `datei liste [ordner]`, `datei info <pfad>`, `datei schreibe <pfad> :: <text>` oder `datei sende <pfad>`."
     action = parts[1].lower()
     value = parts[2] if len(parts) > 2 else ""
     if action in {"lies", "read"}:
@@ -45,6 +45,33 @@ def run(query, context):
                 if len(matches) >= 20:
                     break
         return "Treffer:\n" + "\n".join(matches) if matches else "Keine lokalen Treffer gefunden."
+    if action in {"liste", "list"}:
+        root = Path(value.strip()) if value.strip() else Path(context.settings.allowed_paths[0])
+        decision = context.permissions.check_path(root)
+        if decision.needs_confirmation:
+            context.logger.log("warn", "security", "Datei-Listenzugriff braucht Bestätigung", {"path": str(root), "reason": decision.reason})
+            return f"Dafür brauche ich erst deine Freigabe: {decision.reason}"
+        if not root.exists() or not root.is_dir():
+            return "Diesen Ordner finde ich nicht."
+        entries = sorted(root.iterdir(), key=lambda p: (p.is_file(), p.name.lower()))[:80]
+        lines = [f"Dateien in {root}:"]
+        for path in entries:
+            kind = "Datei" if path.is_file() else "Ordner"
+            detail = f" ({path.stat().st_size} Bytes)" if path.is_file() else ""
+            lines.append(f"- {kind}: {path.name}{detail}")
+            context.memory.save("files", f"listed:{path}", f"Bekannter Pfad: {path}", source=context.source, confidence=0.72)
+        return "\n".join(lines)
+    if action == "info":
+        path = Path(value.strip())
+        decision = context.permissions.check_path(path)
+        if decision.needs_confirmation:
+            context.logger.log("warn", "security", "Datei-Infozugriff braucht Bestätigung", {"path": str(path), "reason": decision.reason})
+            return f"Dafür brauche ich erst deine Freigabe: {decision.reason}"
+        if not path.exists():
+            return "Diesen Pfad finde ich nicht."
+        stat = path.stat()
+        context.memory.save("files", f"info:{path}", f"Datei/Ordner-Info: {path}", source=context.source, confidence=0.9)
+        return f"Pfad: {path}\nTyp: {'Datei' if path.is_file() else 'Ordner'}\nGröße: {stat.st_size} Bytes"
     if action in {"sende", "send", "schick"}:
         path = Path(value.strip())
         decision = context.permissions.check_path(path)
@@ -81,6 +108,9 @@ def _normalize_query(query: str) -> str:
     if lowered.startswith(("sende datei ", "schick datei ")):
         rest = re.sub(r"^(sende|schick) datei\s+", "", stripped, flags=re.IGNORECASE)
         return f"datei sende {rest}"
+    if lowered.startswith(("liste dateien", "dateien liste")):
+        rest = re.sub(r"^(liste dateien|dateien liste)\s*", "", stripped, flags=re.IGNORECASE)
+        return f"datei liste {rest}".strip()
     if lowered.startswith("lies datei "):
         rest = re.sub(r"^lies datei\s+", "", stripped, flags=re.IGNORECASE)
         return f"datei lies {rest}"

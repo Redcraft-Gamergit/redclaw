@@ -15,7 +15,14 @@ class TestResult:
 
 
 class RedClawTestClient(discord.Client):
-    def __init__(self, target_user_id: int, prompts: list[str], timeout_seconds: int = 45, send_only: bool = False):
+    def __init__(
+        self,
+        target_user_id: int,
+        prompts: list[str],
+        timeout_seconds: int = 45,
+        send_only: bool = False,
+        channel_id: int | None = None,
+    ):
         intents = discord.Intents.default()
         intents.message_content = True
         super().__init__(intents=intents)
@@ -23,6 +30,7 @@ class RedClawTestClient(discord.Client):
         self.prompts = prompts
         self.timeout_seconds = timeout_seconds
         self.send_only = send_only
+        self.channel_id = channel_id
         self.results: list[TestResult] = []
         self._current_prompt: str | None = None
         self._response_event = asyncio.Event()
@@ -30,10 +38,15 @@ class RedClawTestClient(discord.Client):
 
     async def on_ready(self) -> None:
         print(f"TESTBOT_READY:{self.user}", flush=True)
-        target = await self.fetch_user(self.target_user_id)
-        print(f"TARGET:{target} bot={target.bot}", flush=True)
-        self._dm_channel = await target.create_dm()
-        print("DM_CREATED", flush=True)
+        if self.channel_id:
+            channel = await self.fetch_channel(self.channel_id)
+            self._dm_channel = channel
+            print(f"CHANNEL:{channel}", flush=True)
+        else:
+            target = await self.fetch_user(self.target_user_id)
+            print(f"TARGET:{target} bot={target.bot}", flush=True)
+            self._dm_channel = await target.create_dm()
+            print("DM_CREATED", flush=True)
         for prompt in self.prompts:
             self._current_prompt = prompt
             self._response_event.clear()
@@ -59,6 +72,7 @@ class RedClawTestClient(discord.Client):
 async def main() -> int:
     token = os.getenv("REDCLAW_TEST_DISCORD_TOKEN")
     target_raw = os.getenv("REDCLAW_TARGET_DISCORD_BOT_ID")
+    channel_raw = os.getenv("REDCLAW_TEST_CHANNEL_ID")
     if not token or not target_raw:
         print("REDCLAW_TEST_DISCORD_TOKEN und REDCLAW_TARGET_DISCORD_BOT_ID müssen gesetzt sein.", file=sys.stderr)
         return 2
@@ -72,7 +86,8 @@ async def main() -> int:
             "wo liegt die discord-test datei?",
         ]
     send_only = os.getenv("REDCLAW_TEST_SEND_ONLY", "").lower() in {"1", "true", "yes", "on"}
-    client = RedClawTestClient(int(target_raw), prompts, send_only=send_only)
+    channel_id = int(channel_raw) if channel_raw else None
+    client = RedClawTestClient(int(target_raw), prompts, send_only=send_only, channel_id=channel_id)
     try:
         await asyncio.wait_for(client.start(token), timeout=(len(prompts) * 60) + 30)
     except asyncio.TimeoutError:

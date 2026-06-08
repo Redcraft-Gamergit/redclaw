@@ -18,3 +18,5 @@ def test_skill_builder_intent():
 def test_natural_file_intent():
     assert detect_intent("erstelle datei /tmp/a.txt :: hi").name == "files"
     assert detect_intent("sende datei /tmp/a.txt").name == "files"
+    assert detect_intent("liste dateien /tmp").name == "files"
+    assert detect_intent("datei info /tmp/a.txt").name == "files"
