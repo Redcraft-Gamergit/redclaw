@@ -8,6 +8,7 @@ from pathlib import Path
 import discord
 
 from redclaw.bootstrap import get_runtime
+from redclaw.skills.skill_files import ATTACH_MARKER, MAX_DISCORD_ATTACHMENT_BYTES
 
 
 runtime = get_runtime()
@@ -80,19 +81,37 @@ async def main() -> None:
 
 
 async def _send_answer(channel: discord.abc.Messageable, answer: str) -> None:
-    attachment_paths: list[Path] = []
-    visible_lines: list[str] = []
-    for line in answer.splitlines():
-        if line.startswith("__REDCLAW_ATTACH__:"):
-            attachment_paths.append(Path(line.split(":", 1)[1].strip()))
-        else:
-            visible_lines.append(line)
-    visible = "\n".join(visible_lines).strip() or "Erledigt."
+    visible, attachment_paths = _extract_attachments(answer)
+    visible = visible or "Erledigt."
     for chunk in _discord_chunks(visible):
         await channel.send(chunk)
     for path in attachment_paths:
-        if path.exists() and path.is_file():
+        if not path.exists() or not path.is_file():
+            await channel.send(f"Datei konnte nicht gesendet werden, weil sie nicht mehr existiert: {path}")
+            continue
+        size = path.stat().st_size
+        if size > MAX_DISCORD_ATTACHMENT_BYTES:
+            mb = size / (1024 * 1024)
+            limit = MAX_DISCORD_ATTACHMENT_BYTES // (1024 * 1024)
+            await channel.send(f"Datei ist zu groß für Discord: {path} ({mb:.1f} MB, Limit {limit} MB)")
+            continue
+        try:
             await channel.send(file=discord.File(path))
+        except Exception as exc:
+            log.exception("Discord-Datei konnte nicht gesendet werden: %s", path)
+            await channel.send(f"Discord konnte die Datei nicht hochladen: {path} ({exc})")
+
+
+def _extract_attachments(answer: str) -> tuple[str, list[Path]]:
+    attachment_paths: list[Path] = []
+    visible_lines: list[str] = []
+    for line in answer.splitlines():
+        if line.startswith(ATTACH_MARKER):
+            attachment_paths.append(Path(line.removeprefix(ATTACH_MARKER).strip()))
+        else:
+            visible_lines.append(line)
+    visible = "\n".join(visible_lines).strip() or "Erledigt."
+    return visible, attachment_paths
 
 
 def _discord_chunks(text: str, size: int = 1900) -> list[str]:

@@ -18,6 +18,8 @@ def test_skill_builder_intent():
 def test_natural_file_intent():
     assert detect_intent("erstelle datei /tmp/a.txt :: hi").name == "files"
     assert detect_intent("sende datei /tmp/a.txt").name == "files"
+    assert detect_intent("schick mir die letzte Datei").name == "files"
+    assert detect_intent("sende mir den Ordner /tmp/projekt").name == "files"
     assert detect_intent("liste dateien /tmp").name == "files"
     assert detect_intent("datei info /tmp/a.txt").name == "files"
     assert detect_intent("Suche lokal nach langchat im Workspace").name == "files"

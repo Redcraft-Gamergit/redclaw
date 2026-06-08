@@ -2,6 +2,12 @@ from __future__ import annotations
 
 from pathlib import Path
 import re
+import time
+import zipfile
+
+
+ATTACH_MARKER = "__REDCLAW_ATTACH__:"
+MAX_DISCORD_ATTACHMENT_BYTES = 24 * 1024 * 1024
 
 SKILL = {
     "name": "files",
@@ -73,15 +79,7 @@ def run(query, context):
         context.memory.save("files", f"info:{path}", f"Datei/Ordner-Info: {path}", source=context.source, confidence=0.9)
         return f"Pfad: {path}\nTyp: {'Datei' if path.is_file() else 'Ordner'}\nGröße: {stat.st_size} Bytes"
     if action in {"sende", "send", "schick"}:
-        path = Path(value.strip())
-        decision = context.permissions.check_path(path)
-        if decision.needs_confirmation:
-            context.logger.log("warn", "security", "Datei-Sendezugriff braucht Bestätigung", {"path": str(path), "reason": decision.reason})
-            return f"Dafür brauche ich erst deine Freigabe: {decision.reason}"
-        if not path.exists() or not path.is_file():
-            return "Diese Datei finde ich nicht."
-        context.memory.save("files", f"sent:{path}", f"Gesendete Datei: {path}", source=context.source, confidence=0.95)
-        return f"Datei wird gesendet: {path}\n__REDCLAW_ATTACH__:{path}"
+        return _send_file_or_folder(value, context)
     if action in {"schreibe", "write"}:
         if "::" not in value:
             return "Nutze `datei schreibe <pfad> :: <text>`."
@@ -105,8 +103,16 @@ def _normalize_query(query: str) -> str:
     if lowered.startswith(("erstelle datei ", "schreibe datei ")):
         rest = re.sub(r"^(erstelle|schreibe) datei\s+", "", stripped, flags=re.IGNORECASE)
         return f"datei schreibe {rest}"
-    if lowered.startswith(("sende datei ", "schick datei ")):
-        rest = re.sub(r"^(sende|schick) datei\s+", "", stripped, flags=re.IGNORECASE)
+    if lowered.startswith(("sende datei ", "schick datei ", "sende mir datei ", "schick mir datei ")):
+        rest = re.sub(r"^(sende|schick)(\s+mir)?\s+datei\s+", "", stripped, flags=re.IGNORECASE)
+        return f"datei sende {rest}"
+    if lowered.startswith(("sende mir die datei ", "schick mir die datei ", "sende die datei ", "schick die datei ")):
+        rest = re.sub(r"^(sende|schick)(\s+mir)?\s+die\s+datei\s+", "", stripped, flags=re.IGNORECASE)
+        return f"datei sende {rest}"
+    if lowered in {"sende letzte datei", "sende mir die letzte datei", "schick letzte datei", "schick mir die letzte datei"}:
+        return "datei sende letzte"
+    if lowered.startswith(("sende ordner ", "schick ordner ", "sende mir ordner ", "schick mir ordner ", "sende mir den ordner ", "schick mir den ordner ", "sende den ordner ", "schick den ordner ")):
+        rest = re.sub(r"^(sende|schick)(\s+mir)?\s+(den\s+)?ordner\s+", "", stripped, flags=re.IGNORECASE)
         return f"datei sende {rest}"
     if lowered.startswith(("liste dateien", "dateien liste")):
         rest = re.sub(r"^(liste dateien|dateien liste)\s*", "", stripped, flags=re.IGNORECASE)
@@ -120,3 +126,57 @@ def _normalize_query(query: str) -> str:
         rest = re.sub(r"\s+im\s+workspace$", "", rest, flags=re.IGNORECASE)
         return f"datei suche {rest}".strip()
     return stripped
+
+
+def _send_file_or_folder(value: str, context) -> str:
+    target = value.strip().strip('"')
+    if not target:
+        return "Welche Datei soll ich dir schicken?"
+    if target.lower() in {"letzte", "letzte datei", "die letzte datei"}:
+        remembered = _last_remembered_file(context)
+        if not remembered:
+            return "Ich kenne noch keine letzte Datei, die ich schicken kann."
+        target = str(remembered)
+
+    path = Path(target)
+    decision = context.permissions.check_path(path)
+    if decision.needs_confirmation:
+        context.logger.log("warn", "security", "Datei-Sendezugriff braucht Bestätigung", {"path": str(path), "reason": decision.reason})
+        return f"Dafür brauche ich erst deine Freigabe: {decision.reason}"
+    if not path.exists():
+        return "Diese Datei oder diesen Ordner finde ich nicht."
+
+    send_path = _zip_folder(path, context) if path.is_dir() else path
+    if not send_path.exists() or not send_path.is_file():
+        return "Diesen Pfad kann ich nicht als Datei verschicken."
+    size = send_path.stat().st_size
+    if size > MAX_DISCORD_ATTACHMENT_BYTES:
+        mb = size / (1024 * 1024)
+        limit = MAX_DISCORD_ATTACHMENT_BYTES // (1024 * 1024)
+        return f"Die Datei ist mit {mb:.1f} MB zu groß für Discord. Limit: {limit} MB."
+
+    context.memory.save("files", f"sent:{send_path}", f"Gesendete Datei: {send_path}", source=context.source, confidence=0.95)
+    return f"Datei wird gesendet: {send_path}\n{ATTACH_MARKER}{send_path}"
+
+
+def _zip_folder(path: Path, context) -> Path:
+    outbox = Path(context.settings.workspace) / ".redclaw_outbox"
+    outbox.mkdir(parents=True, exist_ok=True)
+    safe_name = re.sub(r"[^A-Za-z0-9_.-]+", "_", path.name or "ordner").strip("_") or "ordner"
+    archive = outbox / f"{safe_name}-{int(time.time())}.zip"
+    with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as zip_handle:
+        for child in sorted(path.rglob("*")):
+            if child.is_file():
+                zip_handle.write(child, child.relative_to(path))
+    context.memory.save("files", f"packed:{archive}", f"Ordner als ZIP gepackt: {path} -> {archive}", source=context.source, confidence=0.9)
+    return archive
+
+
+def _last_remembered_file(context) -> Path | None:
+    for item in context.memory.list_by_category("files", limit=40):
+        key = getattr(item, "key", "")
+        if key.startswith(("written:", "found:", "read:", "info:")):
+            path = Path(key.split(":", 1)[1])
+            if path.exists() and path.is_file():
+                return path
+    return None
