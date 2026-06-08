@@ -1071,3 +1071,157 @@ button:hover,
     min-width: 0;
   }
 }
+
+/* Cleaner command surface */
+body {
+  background:
+    radial-gradient(circle at top left, rgba(240, 75, 62, .10), transparent 34%),
+    linear-gradient(180deg, #080b11 0%, #0b0f16 100%);
+}
+
+body::before {
+  display: none;
+}
+
+.sidebar {
+  background: rgba(8, 11, 17, .96);
+  box-shadow: none;
+}
+
+.brand {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.brand-mark,
+.mark {
+  box-shadow: none;
+}
+
+.menu {
+  gap: 6px;
+}
+
+.menu-item {
+  min-height: 40px;
+}
+
+.menu-item.active {
+  background: rgba(240, 75, 62, .16);
+  box-shadow: inset 3px 0 0 var(--red-2);
+}
+
+.topbar {
+  position: static;
+  padding-top: 0;
+  backdrop-filter: none;
+}
+
+.command-chip {
+  min-height: 36px;
+  background: #101722;
+  font-size: 13px;
+}
+
+.hero {
+  min-height: 0;
+  background:
+    linear-gradient(135deg, rgba(240, 75, 62, .18), rgba(13, 16, 23, .98) 58%),
+    var(--surface);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, .22);
+}
+
+.hero::after {
+  background: rgba(255, 122, 102, .46);
+}
+
+.hero-actions {
+  margin-top: 14px;
+}
+
+.metrics {
+  align-items: stretch;
+}
+
+.metric-card {
+  min-width: 118px;
+  background: rgba(8, 11, 16, .64);
+}
+
+.metric-card svg {
+  color: var(--muted);
+}
+
+.surface,
+.quick-action,
+.check,
+.skill,
+.memory-card,
+.log-row,
+.research-note {
+  background: rgba(18, 22, 31, .88);
+  box-shadow: 0 10px 34px rgba(0, 0, 0, .14);
+}
+
+.quick-action {
+  min-height: 104px;
+}
+
+.quick-action:hover,
+.search-card:hover,
+.memory-card:hover,
+.skill:hover,
+.check:hover {
+  border-color: rgba(255, 122, 102, .28);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, .20);
+}
+
+button:hover,
+.logout-link:hover,
+.quick-action:hover,
+.search-card:hover,
+.memory-card:hover,
+.skill:hover,
+.check:hover {
+  transform: none;
+}
+
+.ghost {
+  background: #121722;
+}
+
+.danger {
+  background: #b42318;
+  box-shadow: none;
+}
+
+.livebox,
+.chatlog {
+  background: #070a0f;
+}
+
+.bubble.user {
+  background: #202838;
+}
+
+.bubble.claw {
+  background: rgba(240, 75, 62, .15);
+}
+
+.search-card {
+  background: rgba(23, 28, 39, .96);
+}
+
+.memory-tab.active {
+  background: rgba(240, 75, 62, .16);
+}
+
+@media (max-width: 820px) {
+  .command-chip {
+    flex: 1 1 auto;
+  }
+
+  .hero {
+    gap: 16px;
+  }
+}
