@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import itertools
+import subprocess
 from collections.abc import AsyncIterator, Callable
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -50,6 +51,7 @@ class JobQueue:
         try:
             proc = await asyncio.create_subprocess_exec(
                 *job.command,
+                stdin=subprocess.DEVNULL,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.STDOUT,
             )
