@@ -21,6 +21,7 @@
     <nav class="menu" aria-label="Hauptmenü">
       <button class="menu-item active" type="button" data-view="overview"><i data-lucide="radar"></i><span>Übersicht</span></button>
       <button class="menu-item" type="button" data-view="chat"><i data-lucide="message-square"></i><span>Chat</span></button>
+      <button class="menu-item" type="button" data-view="search"><i data-lucide="search"></i><span>Suche</span></button>
       <button class="menu-item" type="button" data-view="system"><i data-lucide="activity"></i><span>System</span></button>
       <button class="menu-item" type="button" data-view="memory"><i data-lucide="database"></i><span>Memory</span></button>
       <button class="menu-item" type="button" data-view="skills"><i data-lucide="blocks"></i><span>Skills</span></button>
@@ -78,9 +79,9 @@
           <strong>Memory</strong>
           <span>Gespeicherte Fakten ansehen</span>
         </button>
-        <button class="quick-action" type="button" data-view-shortcut="logs">
-          <i data-lucide="terminal"></i>
-          <strong>Logs</strong>
+        <button class="quick-action" type="button" data-view-shortcut="search">
+          <i data-lucide="search"></i>
+          <strong>Websuche</strong>
           <span>Aktivität live verfolgen</span>
         </button>
       </div>
@@ -139,6 +140,57 @@
           <button class="tool-button" type="button" data-prompt="was weißt du über mich"><i data-lucide="user-search"></i><span>Memory fragen</span></button>
           <button class="tool-button" type="button" data-prompt="uhrzeit"><i data-lucide="clock"></i><span>Uhrzeit</span></button>
           <button class="tool-button" type="button" id="voice-button"><i data-lucide="mic"></i><span>Voice</span></button>
+        </aside>
+      </div>
+    </section>
+
+    <section class="view" data-panel="search">
+      <div class="search-layout">
+        <section class="surface search-panel">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Internet</p>
+              <h2>Websuche</h2>
+            </div>
+            <span class="online-pill"><span class="status-dot"></span>Brave / Fallback</span>
+          </div>
+          <form hx-post="/search" hx-target="#search-results" hx-swap="innerHTML" class="search-form">
+            <div class="search-input-wrap">
+              <i data-lucide="search"></i>
+              <input name="query" placeholder="Suche im Internet..." autocomplete="off">
+            </div>
+            <button type="submit"><i data-lucide="radar"></i><span>Suchen</span></button>
+          </form>
+          <div class="search-presets">
+            <button class="ghost search-preset" type="button" data-search="NVIDIA NIM API limits 2026"><i data-lucide="zap"></i><span>NIM Limits</span></button>
+            <button class="ghost search-preset" type="button" data-search="Raspberry Pi 5 Docker performance tips"><i data-lucide="cpu"></i><span>Pi Docker</span></button>
+            <button class="ghost search-preset" type="button" data-search="Python FastAPI dashboard best practices"><i data-lucide="layout-dashboard"></i><span>FastAPI UI</span></button>
+          </div>
+          <div id="search-results" class="search-results">
+            <div class="empty-state compact">
+              <i data-lucide="search"></i>
+              <strong>Bereit fuer Recherche</strong>
+              <span>Brave wird genutzt, wenn ein Key gesetzt ist. Sonst nimmt RedClaw den DuckDuckGo-Fallback.</span>
+            </div>
+          </div>
+        </section>
+
+        <aside class="surface search-side">
+          <p class="eyebrow">Recherche-Modus</p>
+          <div class="research-note">
+            <i data-lucide="shield-check"></i>
+            <div>
+              <strong>Gespeicherte Treffer</strong>
+              <span>Suchergebnisse landen im Memory, damit RedClaw spaeter Quellen und Themen wiederfindet.</span>
+            </div>
+          </div>
+          <div class="research-note">
+            <i data-lucide="key-round"></i>
+            <div>
+              <strong>Ohne API-Key</strong>
+              <span>Falls Brave fehlt, sucht RedClaw trotzdem weiter ueber den Fallback.</span>
+            </div>
+          </div>
         </aside>
       </div>
     </section>
@@ -298,6 +350,7 @@
     const viewTitles = {
       overview: "Übersicht",
       chat: "Chat",
+      search: "Suche",
       system: "System",
       memory: "Memory",
       skills: "Skills",
@@ -337,6 +390,15 @@
         showView("chat");
         chatInput.value = control.dataset.prompt;
         chatInput.focus();
+      });
+    });
+
+    document.querySelectorAll("[data-search]").forEach((control) => {
+      control.addEventListener("click", () => {
+        showView("search");
+        const input = document.querySelector(".search-form input[name='query']");
+        input.value = control.dataset.search;
+        input.focus();
       });
     });
 

@@ -14,6 +14,8 @@ from fastapi.templating import Jinja2Templates
 
 from redclaw.agent.systemcheck import run_systemcheck
 from redclaw.bootstrap import get_runtime
+from redclaw.skills.base import SkillContext
+from redclaw.skills.skill_search import clean_search_query, search_web
 from redclaw.web.auth import SESSION_COOKIE, is_authenticated, session_token, verify_password
 from redclaw.web.voice import synthesize
 
@@ -131,6 +133,40 @@ async def chat(message: str = Form(...)):
     safe_message = escape(message)
     safe_answer = escape(answer)
     return HTMLResponse(f"<div class='bubble user'>{safe_message}</div><div class='bubble claw'>{safe_answer}</div>")
+
+
+@app.post("/search")
+async def web_search(query: str = Form(...)):
+    clean_query = clean_search_query(query)
+    context = SkillContext(
+        settings=runtime.settings,
+        memory=runtime.memory,
+        logger=runtime.logger,
+        permissions=runtime.permissions,
+        jobs=runtime.jobs,
+        source="web_search",
+    )
+    try:
+        results = await search_web(clean_query, context, limit=6)
+    except Exception as exc:
+        runtime.logger.log("warn", "search", "Websuche fehlgeschlagen", {"query": clean_query, "error": type(exc).__name__})
+        return HTMLResponse(f"<div class='empty-state compact'><strong>Suche fehlgeschlagen</strong><span>{escape(type(exc).__name__)}</span></div>")
+    for item in results:
+        runtime.memory.save("search", f"{clean_query}:{item.url}", f"{item.title} - {item.url}", source="web_search", confidence=0.74)
+    if not results:
+        return HTMLResponse("<div class='empty-state compact'><strong>Keine Treffer</strong><span>Versuch eine andere Suchanfrage.</span></div>")
+    cards = [f"<div class='search-summary'><span>{len(results)} Treffer</span><strong>{escape(clean_query)}</strong></div>"]
+    for item in results:
+        cards.append(
+            "<article class='search-card'>"
+            f"<div class='search-source'>{escape(item.source)}</div>"
+            f"<a href='{escape(item.url)}' target='_blank' rel='noreferrer'>{escape(item.title)}</a>"
+            f"<p>{escape(item.description)}</p>"
+            f"<small>{escape(item.url)}</small>"
+            "</article>"
+        )
+    await broadcast({"kind": "search", "text": f"{len(results)} Treffer fuer {clean_query}"})
+    return HTMLResponse("".join(cards))
 
 
 @app.post("/memory/delete/{memory_id}")
