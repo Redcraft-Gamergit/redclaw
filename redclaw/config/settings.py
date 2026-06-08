@@ -39,6 +39,7 @@ class Settings:
     nvidia_nim_top_p: float = 0.95
     nvidia_nim_enable_thinking: bool = False
     nvidia_nim_timeout: int = 120
+    nvidia_nim_rpm_limit: int = 36
     codex_command: str = "codex"
     language: str = "de"
     personality: str = "freundlich, direkt, wachsam"
@@ -91,6 +92,7 @@ class Settings:
             nvidia_nim_top_p=float(os.getenv("NVIDIA_NIM_TOP_P", api.get("nvidia_nim_top_p", 0.95))),
             nvidia_nim_enable_thinking=str(os.getenv("NVIDIA_NIM_ENABLE_THINKING", api.get("nvidia_nim_enable_thinking", False))).lower() in {"1", "true", "yes", "on"},
             nvidia_nim_timeout=int(os.getenv("NVIDIA_NIM_TIMEOUT", api.get("nvidia_nim_timeout", 120))),
+            nvidia_nim_rpm_limit=int(os.getenv("NVIDIA_NIM_RPM_LIMIT", api.get("nvidia_nim_rpm_limit", 36))),
             codex_command=os.getenv("CODEX_COMMAND", api.get("codex_command", "codex")),
             language=str(agent.get("language", "de")),
             personality=str(agent.get("personality", "freundlich, direkt, wachsam")),

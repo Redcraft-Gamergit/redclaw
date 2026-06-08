@@ -13,6 +13,10 @@ class FakeMemoryItem:
 
 
 class FakeResponse:
+    status_code = 200
+    headers = {}
+    text = ""
+
     def raise_for_status(self):
         return None
 
@@ -47,6 +51,7 @@ def make_context():
         nvidia_nim_top_p=0.95,
         nvidia_nim_enable_thinking=True,
         nvidia_nim_timeout=240,
+        nvidia_nim_rpm_limit=36,
     )
     memory = SimpleNamespace(
         recent_conversation=lambda limit=10: [
@@ -68,7 +73,7 @@ def test_nim_uses_fast_payload_for_normal_questions(monkeypatch):
     answer = asyncio.run(skill_nim.run("NIM was ist los?", make_context()))
 
     assert answer == "ok"
-    assert FakeClient.payloads[0]["max_tokens"] == 1024
+    assert FakeClient.payloads[0]["max_tokens"] == 768
     assert "chat_template_kwargs" not in FakeClient.payloads[0]
 
 
@@ -92,3 +97,62 @@ def test_nim_includes_memory_context(monkeypatch):
     assert "Wir bauen RedClaw" in system
     assert "Raspberry Pi 5" in system
     assert "/home/redcraft/redclaw_workspace/notiz.txt" in system
+
+
+def test_nim_retries_rate_limited_requests(monkeypatch):
+    class RetryResponse(FakeResponse):
+        calls = 0
+
+        def __init__(self, status_code):
+            self.status_code = status_code
+            self.headers = {"retry-after": "0"}
+            self.text = "rate limited"
+
+        def json(self):
+            return {"choices": [{"message": {"content": "retry-ok"}}]}
+
+        def raise_for_status(self):
+            if self.status_code >= 400:
+                request = httpx.Request("POST", "https://example.test")
+                raise httpx.HTTPStatusError("error", request=request, response=httpx.Response(self.status_code, request=request, text=self.text))
+
+    class RetryClient(FakeClient):
+        async def post(self, endpoint, headers, json):
+            RetryResponse.calls += 1
+            return RetryResponse(429 if RetryResponse.calls == 1 else 200)
+
+    import httpx
+
+    monkeypatch.setattr(skill_nim.httpx, "AsyncClient", RetryClient)
+    answer = asyncio.run(skill_nim.run("NIM test", make_context()))
+
+    assert answer == "retry-ok"
+    assert RetryResponse.calls == 2
+
+
+def test_nim_circuit_breaker_after_failures(monkeypatch):
+    skill_nim._consecutive_failures = 0
+    skill_nim._circuit_open_until = 0
+
+    class FailingResponse(FakeResponse):
+        status_code = 503
+        headers = {"retry-after": "0"}
+        text = "down"
+
+        def raise_for_status(self):
+            request = httpx.Request("POST", "https://example.test")
+            raise httpx.HTTPStatusError("error", request=request, response=httpx.Response(503, request=request, text="down"))
+
+    class FailingClient(FakeClient):
+        async def post(self, endpoint, headers, json):
+            return FailingResponse()
+
+    import httpx
+
+    monkeypatch.setattr(skill_nim.httpx, "AsyncClient", FailingClient)
+    context = make_context()
+    for _ in range(3):
+        asyncio.run(skill_nim.run("NIM test", context))
+
+    answer = asyncio.run(skill_nim.run("NIM test", context))
+    assert "Cooldown" in answer

@@ -160,6 +160,7 @@ async def save_config(
     nvidia_nim_top_p: float = Form(0.95),
     nvidia_nim_enable_thinking: str = Form("off"),
     nvidia_nim_timeout: int = Form(120),
+    nvidia_nim_rpm_limit: int = Form(36),
     allowed_paths: str = Form("/home/pi/redclaw_workspace"),
     personality: str = Form("freundlich, direkt, wachsam"),
 ):
@@ -190,6 +191,7 @@ async def save_config(
             "nvidia_nim_top_p": nvidia_nim_top_p,
             "nvidia_nim_enable_thinking": nvidia_nim_enable_thinking == "on",
             "nvidia_nim_timeout": nvidia_nim_timeout,
+            "nvidia_nim_rpm_limit": nvidia_nim_rpm_limit,
             "codex_command": runtime.settings.codex_command,
         },
     }
@@ -205,6 +207,7 @@ async def save_config(
     runtime.settings.nvidia_nim_top_p = nvidia_nim_top_p
     runtime.settings.nvidia_nim_enable_thinking = nvidia_nim_enable_thinking == "on"
     runtime.settings.nvidia_nim_timeout = nvidia_nim_timeout
+    runtime.settings.nvidia_nim_rpm_limit = nvidia_nim_rpm_limit
     runtime.settings.allowed_paths = [Path(p) for p in paths]
     runtime.settings.personality = personality
     runtime.logger.log("info", "config", "Web-Config gespeichert", {"path": str(config_path)})

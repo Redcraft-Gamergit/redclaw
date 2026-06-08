@@ -27,4 +27,5 @@ api:
   nvidia_nim_top_p: 0.95
   nvidia_nim_enable_thinking: false
   nvidia_nim_timeout: 120
+  nvidia_nim_rpm_limit: 36
   codex_command: codex
