@@ -20,3 +20,9 @@ def test_natural_file_intent():
     assert detect_intent("sende datei /tmp/a.txt").name == "files"
     assert detect_intent("liste dateien /tmp").name == "files"
     assert detect_intent("datei info /tmp/a.txt").name == "files"
+    assert detect_intent("Suche lokal nach langchat im Workspace").name == "files"
+
+
+def test_time_intent():
+    assert detect_intent("Wie spaet ist es?").name == "time"
+    assert detect_intent("Wie spät ist es?").name == "time"

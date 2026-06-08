@@ -114,4 +114,9 @@ def _normalize_query(query: str) -> str:
     if lowered.startswith("lies datei "):
         rest = re.sub(r"^lies datei\s+", "", stripped, flags=re.IGNORECASE)
         return f"datei lies {rest}"
+    if "suche lokal" in lowered or "lokal suche" in lowered:
+        rest = re.sub(r"^(suche lokal|lokal suche)\s+", "", stripped, flags=re.IGNORECASE)
+        rest = re.sub(r"^nach\s+", "", rest, flags=re.IGNORECASE)
+        rest = re.sub(r"\s+im\s+workspace$", "", rest, flags=re.IGNORECASE)
+        return f"datei suche {rest}".strip()
     return stripped

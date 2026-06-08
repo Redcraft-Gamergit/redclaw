@@ -77,3 +77,22 @@ def test_file_list_and_info(tmp_path):
     assert "listed.txt" in listing
     assert "Typ: Datei" in info
     assert memory.search("listed.txt", category="files")
+
+
+def test_file_local_search_natural_language(tmp_path):
+    db = tmp_path / "redclaw.db"
+    init_db(db)
+    memory = MemoryRepository(connect(db))
+    context = SimpleNamespace(
+        settings=SimpleNamespace(allowed_paths=[tmp_path]),
+        permissions=PermissionService([tmp_path]),
+        memory=memory,
+        logger=LoggingService(memory, tmp_path / "logs"),
+        source="test",
+    )
+    target = tmp_path / "langchat.txt"
+    target.write_text("RedClaw Langchat Test", encoding="utf-8")
+
+    result = skill_files.run("Suche lokal nach langchat im Workspace", context)
+
+    assert str(target) in result
