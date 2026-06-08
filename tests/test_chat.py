@@ -71,3 +71,43 @@ def test_chat_reports_recent_sources(agent):
     answer = asyncio.run(agent.handle_message("mit wem chattest du gerade", source="discord"))
     assert "Testbot" in answer
     assert "Redcrafter" in answer
+
+
+def test_chat_reports_capabilities(agent):
+    answer = asyncio.run(agent.handle_message("was kannst du?", source="web"))
+    assert "Memory" in answer
+    assert "Dateien" in answer
+    assert "Codex" in answer
+
+
+def test_chat_runs_multi_step_plan(agent, tmp_path):
+    target = tmp_path / "workspace" / "plan-test.txt"
+
+    answer = asyncio.run(
+        agent.handle_message(
+            f"erstelle datei {target} :: Hallo Plan und dann datei info {target}",
+            source="web",
+        )
+    )
+
+    assert "Ich fuehre 2 Schritte aus" in answer
+    assert "Datei geschrieben" in answer
+    assert "Typ: Datei" in answer
+    assert target.read_text(encoding="utf-8") == "Hallo Plan"
+
+
+def test_chat_summarizes_recent_context(agent):
+    asyncio.run(agent.handle_message("ich bin Redcrafter", source="web"))
+    answer = asyncio.run(agent.handle_message("was haben wir besprochen?", source="web"))
+    assert "Zuletzt ging es um" in answer
+    assert "Redcrafter" in answer
+
+
+def test_chat_reports_recent_actions(agent, tmp_path):
+    target = tmp_path / "workspace" / "aktion.txt"
+    asyncio.run(agent.handle_message(f"erstelle datei {target} :: Aktion", source="web"))
+
+    answer = asyncio.run(agent.handle_message("was hast du zuletzt gemacht?", source="web"))
+
+    assert "Meine letzten Aktionen" in answer
+    assert "aktion.txt" in answer
