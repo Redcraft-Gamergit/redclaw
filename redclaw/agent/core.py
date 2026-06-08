@@ -77,7 +77,7 @@ class AgentCore:
             return
         snippet = clean[:700]
         key = f"{int(time.time())}:{role}:{source}"
-        self.memory.save("conversation", key, f"{role}: {snippet}", source=source, confidence=0.9)
+        self.memory.save("conversation", key, f"{role}@{source}: {snippet}", source=source, confidence=0.9)
 
     def _track_repeat(self, text: str, source: str) -> int:
         normalized = re.sub(r"\s+", " ", text.lower()).strip()
@@ -101,9 +101,27 @@ class AgentCore:
             return calculation
         if "wie geht" in lowered or "wie gehts" in lowered or "wie gehst" in lowered:
             return "Mir geht's gut. Ich bin online, Discord sitzt, Web-UI läuft. Was machen wir als Nächstes?"
+        if "mit wem" in lowered and ("chattest" in lowered or "redest" in lowered or "sprichst" in lowered):
+            return self._conversation_sources()
         if self.settings.nvidia_nim_api_key and "nim" in self.skills.modules:
             return await self.skills.run("nim", text, context)
         return "Ich bin da. Stell mir einfach eine Frage, gib mir eine Aufgabe oder sag mir, welchen Skill ich nutzen soll."
+
+    def _conversation_sources(self) -> str:
+        recent = self.memory.recent_conversation(limit=30)
+        sources: list[str] = []
+        for item in recent:
+            label = {
+                "discord": "Redcrafter per Discord-DM",
+                "discord_testbot": "der Testbot per Discord-DM",
+                "web": "du im Web-Chat",
+                "web_voice": "du per Voice im Web",
+            }.get(item.source or "", item.source or "unbekannte Quelle")
+            if label not in sources:
+                sources.append(label)
+        if not sources:
+            return "Gerade habe ich noch keinen gespeicherten Gesprächskontext."
+        return "Ich habe zuletzt mit diesen Quellen gesprochen: " + ", ".join(sources) + "."
 
     @staticmethod
     def _try_calculate(text: str) -> str | None:

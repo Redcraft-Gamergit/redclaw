@@ -44,8 +44,9 @@ class RedClawClient(discord.Client):
             log.warning("Discord-Nachricht ignoriert: author_id=%s is_dm=%s", message.author.id, is_dm)
             return
         log.info("Discord-DM von erlaubtem Absender empfangen")
+        source = "discord_testbot" if allowed_test_bot else "discord"
         async with message.channel.typing():
-            answer = await runtime.agent.handle_message(message.content, source="discord")
+            answer = await runtime.agent.handle_message(message.content, source=source)
         await _send_answer(message.channel, answer)
 
     async def _reminder_loop(self) -> None:

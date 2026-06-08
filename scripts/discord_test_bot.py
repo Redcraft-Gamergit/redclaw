@@ -15,13 +15,14 @@ class TestResult:
 
 
 class RedClawTestClient(discord.Client):
-    def __init__(self, target_user_id: int, prompts: list[str], timeout_seconds: int = 45):
+    def __init__(self, target_user_id: int, prompts: list[str], timeout_seconds: int = 45, send_only: bool = False):
         intents = discord.Intents.default()
         intents.message_content = True
         super().__init__(intents=intents)
         self.target_user_id = target_user_id
         self.prompts = prompts
         self.timeout_seconds = timeout_seconds
+        self.send_only = send_only
         self.results: list[TestResult] = []
         self._current_prompt: str | None = None
         self._response_event = asyncio.Event()
@@ -38,6 +39,9 @@ class RedClawTestClient(discord.Client):
             self._response_event.clear()
             print(f"SEND:{prompt}", flush=True)
             await self._dm_channel.send(prompt)
+            if self.send_only:
+                self.results.append(TestResult(prompt, "<sent>"))
+                continue
             try:
                 await asyncio.wait_for(self._response_event.wait(), timeout=self.timeout_seconds)
             except asyncio.TimeoutError:
@@ -67,7 +71,8 @@ async def main() -> int:
             "datei sende /home/redcraft/redclaw_workspace/discord-test.txt",
             "wo liegt die discord-test datei?",
         ]
-    client = RedClawTestClient(int(target_raw), prompts)
+    send_only = os.getenv("REDCLAW_TEST_SEND_ONLY", "").lower() in {"1", "true", "yes", "on"}
+    client = RedClawTestClient(int(target_raw), prompts, send_only=send_only)
     try:
         await asyncio.wait_for(client.start(token), timeout=(len(prompts) * 60) + 30)
     except asyncio.TimeoutError:

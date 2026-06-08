@@ -62,5 +62,12 @@ def test_chat_messages_are_remembered(agent):
     asyncio.run(agent.handle_message("was ist 1 + 1", source="discord"))
     remembered = agent.memory.recent_conversation(limit=4)
     values = [item.value for item in remembered]
-    assert any("user: was ist 1 + 1" in value for value in values)
-    assert any("assistant: 1 + 1 = 2" in value for value in values)
+    assert any("user@discord: was ist 1 + 1" in value for value in values)
+    assert any("assistant@discord: 1 + 1 = 2" in value for value in values)
+
+
+def test_chat_reports_recent_sources(agent):
+    asyncio.run(agent.handle_message("hey", source="discord_testbot"))
+    answer = asyncio.run(agent.handle_message("mit wem chattest du gerade", source="discord"))
+    assert "Testbot" in answer
+    assert "Redcrafter" in answer
