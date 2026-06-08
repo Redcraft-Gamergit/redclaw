@@ -14,7 +14,7 @@
       <div class="brand-mark">RC</div>
       <div>
         <strong>RedClaw</strong>
-        <span>Private Agent</span>
+        <span>Private Agent Core</span>
       </div>
     </div>
 
@@ -42,6 +42,8 @@
         <h1 id="view-title">Übersicht</h1>
       </div>
       <div class="top-actions">
+        <span class="command-chip"><i data-lucide="server"></i><span>Pi Live</span></span>
+        <span class="command-chip"><i data-lucide="shield-check"></i><span>DM-only</span></span>
         <button class="ghost" type="button" data-view-shortcut="chat"><i data-lucide="send"></i><span>Chat öffnen</span></button>
         <form method="post" action="/panic">
           <button class="danger" type="submit"><i data-lucide="octagon-x"></i><span>Panik-Stopp</span></button>
@@ -55,11 +57,16 @@
           <p class="eyebrow">DM-only Agent</p>
           <h2>RedClaw ist wach.</h2>
           <p>Workspace: {{ settings.workspace }}</p>
+          <div class="hero-actions">
+            <button class="ghost" type="button" data-view-shortcut="chat"><i data-lucide="message-square"></i><span>Chat starten</span></button>
+            <button class="ghost" type="button" data-view-shortcut="search"><i data-lucide="radar"></i><span>Recherche</span></button>
+            <button class="ghost" type="button" data-view-shortcut="memory"><i data-lucide="brain"></i><span>Memory</span></button>
+          </div>
         </div>
         <div class="metrics">
-          <span><strong>{{ skills|length }}</strong> Skills</span>
-          <span><strong>{{ memory_stats.total }}</strong> Memorys</span>
-          <span><strong>{{ jobs|length }}</strong> Jobs</span>
+          <span class="metric-card"><i data-lucide="blocks"></i><strong>{{ skills|length }}</strong><em>Skills</em></span>
+          <span class="metric-card"><i data-lucide="database"></i><strong>{{ memory_stats.total }}</strong><em>Memorys</em></span>
+          <span class="metric-card"><i data-lucide="terminal-square"></i><strong>{{ jobs|length }}</strong><em>Jobs</em></span>
         </div>
       </div>
 
