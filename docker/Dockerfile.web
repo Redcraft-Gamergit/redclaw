@@ -3,7 +3,7 @@ FROM python:3.13-slim
 WORKDIR /app
 ENV PYTHONPATH=/app
 
-RUN apt-get update && apt-get install -y --no-install-recommends git curl ca-certificates tar && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends git curl ca-certificates tar nodejs npm && rm -rf /var/lib/apt/lists/*
 RUN set -eux; \
     arch="$(dpkg --print-architecture)"; \
     case "$arch" in \
@@ -14,6 +14,7 @@ RUN set -eux; \
     curl -fsSL "https://download.docker.com/linux/static/stable/${docker_arch}/docker-29.5.3.tgz" \
       | tar xz --strip-components=1 -C /usr/local/bin docker/docker; \
     chmod +x /usr/local/bin/docker
+RUN npm install -g @openai/codex@0.137.0
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
