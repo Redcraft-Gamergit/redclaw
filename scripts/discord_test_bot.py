@@ -28,15 +28,20 @@ class RedClawTestClient(discord.Client):
         self._dm_channel: discord.DMChannel | None = None
 
     async def on_ready(self) -> None:
+        print(f"TESTBOT_READY:{self.user}", flush=True)
         target = await self.fetch_user(self.target_user_id)
+        print(f"TARGET:{target} bot={target.bot}", flush=True)
         self._dm_channel = await target.create_dm()
+        print("DM_CREATED", flush=True)
         for prompt in self.prompts:
             self._current_prompt = prompt
             self._response_event.clear()
+            print(f"SEND:{prompt}", flush=True)
             await self._dm_channel.send(prompt)
             try:
                 await asyncio.wait_for(self._response_event.wait(), timeout=self.timeout_seconds)
             except asyncio.TimeoutError:
+                print(f"TIMEOUT:{prompt}", flush=True)
                 self.results.append(TestResult(prompt, "<timeout>"))
         await self.close()
 
@@ -53,14 +58,26 @@ async def main() -> int:
     if not token or not target_raw:
         print("REDCLAW_TEST_DISCORD_TOKEN und REDCLAW_TARGET_DISCORD_BOT_ID müssen gesetzt sein.", file=sys.stderr)
         return 2
-    prompts = [
-        "Hey",
-        "was ist 1 + 1",
-        "datei schreibe /home/redcraft/redclaw_workspace/discord-test.txt :: Discord Test",
-        "wo liegt die discord-test datei?",
-    ]
+    prompts = [item.strip() for item in os.getenv("REDCLAW_TEST_PROMPTS", "").split("|||") if item.strip()]
+    if not prompts:
+        prompts = [
+            "Hey",
+            "was ist 1 + 1",
+            "datei schreibe /home/redcraft/redclaw_workspace/discord-test.txt :: Discord Test",
+            "datei sende /home/redcraft/redclaw_workspace/discord-test.txt",
+            "wo liegt die discord-test datei?",
+        ]
     client = RedClawTestClient(int(target_raw), prompts)
-    await client.start(token)
+    try:
+        await asyncio.wait_for(client.start(token), timeout=(len(prompts) * 60) + 30)
+    except asyncio.TimeoutError:
+        print("GLOBAL_TIMEOUT", file=sys.stderr, flush=True)
+        await client.close()
+        return 1
+    except Exception as exc:
+        print(f"TESTBOT_ERROR:{type(exc).__name__}:{exc}", file=sys.stderr, flush=True)
+        await client.close()
+        return 1
     for result in client.results:
         print(f"PROMPT: {result.prompt}")
         print(f"ANSWER: {result.answer[:500]}")
