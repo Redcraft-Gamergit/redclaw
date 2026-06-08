@@ -44,6 +44,8 @@ def detect_intent(text: str) -> Intent:
         return Intent("skill_builder", text)
     if "codex" in lowered:
         return Intent("codex", text)
+    if "ideen" in lowered or "was kann man noch" in lowered or "was soll ich noch einbauen" in lowered or "reincoden" in lowered:
+        return Intent("ideas", text)
     if "nvidia" in lowered or "nim" in lowered:
         return Intent("nim", text)
     if "uhrzeit" in lowered or "datum" in lowered or "wie spaet" in lowered or "wie spät" in lowered:

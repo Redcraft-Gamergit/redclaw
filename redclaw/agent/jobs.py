@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import itertools
+import os
 import subprocess
 from collections.abc import AsyncIterator, Callable
 from dataclasses import dataclass, field
@@ -13,6 +14,8 @@ class Job:
     id: int
     kind: str
     command: list[str]
+    cwd: str | None = None
+    env: dict[str, str] = field(default_factory=dict)
     status: str = "queued"
     output: list[str] = field(default_factory=list)
     created_at: datetime = field(default_factory=datetime.utcnow)
@@ -28,8 +31,8 @@ class JobQueue:
     def subscribe(self, callback: Callable[[Job, str], None]) -> None:
         self._subscribers.append(callback)
 
-    def start(self, kind: str, command: list[str]) -> Job:
-        job = Job(id=next(self._ids), kind=kind, command=command)
+    def start(self, kind: str, command: list[str], cwd: str | None = None, env: dict[str, str] | None = None) -> Job:
+        job = Job(id=next(self._ids), kind=kind, command=command, cwd=cwd, env=env or {})
         self.jobs[job.id] = job
         self._tasks[job.id] = asyncio.create_task(self._run(job))
         return job
@@ -51,6 +54,8 @@ class JobQueue:
         try:
             proc = await asyncio.create_subprocess_exec(
                 *job.command,
+                cwd=job.cwd,
+                env={**os.environ, **job.env} if job.env else None,
                 stdin=subprocess.DEVNULL,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.STDOUT,

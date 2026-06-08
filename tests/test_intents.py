@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from redclaw.agent.intents import detect_intent
 
@@ -14,6 +14,10 @@ def test_nim_intent():
 def test_skill_builder_intent():
     assert detect_intent("Skill erstellen für Kalender").name == "skill_builder"
 
+
+def test_ideas_intent():
+    assert detect_intent("was kann man noch einbauen?").name == "ideas"
+    assert detect_intent("ueberlege was man noch reincoden kann").name == "ideas"
 
 def test_natural_file_intent():
     assert detect_intent("erstelle datei /tmp/a.txt :: hi").name == "files"

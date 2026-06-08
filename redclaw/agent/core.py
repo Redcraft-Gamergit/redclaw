@@ -15,7 +15,7 @@ from redclaw.memory.repository import MemoryRepository
 from redclaw.skills.base import SkillContext, SkillRegistry
 
 
-ACTION_INTENTS = {"search", "files", "skill_builder", "shell", "codex", "nim", "time", "system", "reminder"}
+ACTION_INTENTS = {"search", "files", "skill_builder", "shell", "codex", "ideas", "nim", "time", "system", "reminder"}
 
 
 class AgentCore:
@@ -97,6 +97,7 @@ class AgentCore:
             "skill_builder": "skill_builder",
             "shell": "shell",
             "codex": "codex",
+            "ideas": "ideas",
             "nim": "nim",
             "time": "time",
             "system": "system",
@@ -172,7 +173,7 @@ class AgentCore:
         names = ", ".join(skill["name"] for skill in skills)
         return (
             "Ich kann chatten, rechnen, Memory nutzen, Erinnerungen setzen, Dateien in erlaubten Ordnern lesen/schreiben/senden, "
-            "lokal oder per Web-API suchen, Systemwerte pruefen, Shell/Codex-Jobs ueberwacht starten und Skills erweitern. "
+            "lokal oder per Web-API suchen, Systemwerte pruefen, Shell/Codex-Jobs ueberwacht starten, Ideen vorschlagen und Skills erweitern. "
             f"Aktive Skills: {names}."
         )
 
