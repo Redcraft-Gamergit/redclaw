@@ -21,7 +21,15 @@ def detect_intent(text: str) -> Intent:
         return Intent("memory_about_user", text)
     if lowered.startswith("suche ") or "websuche" in lowered:
         return Intent("search", text)
-    if lowered.startswith("datei ") or "lies datei" in lowered or "durchsuche" in lowered:
+    if (
+        lowered.startswith("datei ")
+        or "lies datei" in lowered
+        or "durchsuche" in lowered
+        or "erstelle datei" in lowered
+        or "schreibe datei" in lowered
+        or "sende datei" in lowered
+        or "schick datei" in lowered
+    ):
         return Intent("files", text)
     if lowered.startswith("shell ") or lowered.startswith("cmd "):
         return Intent("shell", text)

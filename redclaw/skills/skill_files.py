@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import re
 
 SKILL = {
     "name": "files",
@@ -11,9 +12,10 @@ SKILL = {
 
 
 def run(query, context):
+    query = _normalize_query(query)
     parts = query.split(maxsplit=2)
     if len(parts) < 2:
-        return "Datei-Skill: nutze `datei lies <pfad>`, `datei suche <text>` oder `datei schreibe <pfad> :: <text>`."
+        return "Datei-Skill: nutze `datei lies <pfad>`, `datei suche <text>`, `datei schreibe <pfad> :: <text>` oder `datei sende <pfad>`."
     action = parts[1].lower()
     value = parts[2] if len(parts) > 2 else ""
     if action in {"lies", "read"}:
@@ -43,6 +45,16 @@ def run(query, context):
                 if len(matches) >= 20:
                     break
         return "Treffer:\n" + "\n".join(matches) if matches else "Keine lokalen Treffer gefunden."
+    if action in {"sende", "send", "schick"}:
+        path = Path(value.strip())
+        decision = context.permissions.check_path(path)
+        if decision.needs_confirmation:
+            context.logger.log("warn", "security", "Datei-Sendezugriff braucht Bestätigung", {"path": str(path), "reason": decision.reason})
+            return f"Dafür brauche ich erst deine Freigabe: {decision.reason}"
+        if not path.exists() or not path.is_file():
+            return "Diese Datei finde ich nicht."
+        context.memory.save("files", f"sent:{path}", f"Gesendete Datei: {path}", source=context.source, confidence=0.95)
+        return f"Datei wird gesendet: {path}\n__REDCLAW_ATTACH__:{path}"
     if action in {"schreibe", "write"}:
         if "::" not in value:
             return "Nutze `datei schreibe <pfad> :: <text>`."
@@ -58,3 +70,18 @@ def run(query, context):
         context.memory.save("files", f"written:{path}", f"Erstellte/geschriebene Datei: {path}", source=context.source, confidence=1.0)
         return f"Datei geschrieben: {path}"
     return "Diese Datei-Aktion kenne ich noch nicht."
+
+
+def _normalize_query(query: str) -> str:
+    stripped = query.strip()
+    lowered = stripped.lower()
+    if lowered.startswith(("erstelle datei ", "schreibe datei ")):
+        rest = re.sub(r"^(erstelle|schreibe) datei\s+", "", stripped, flags=re.IGNORECASE)
+        return f"datei schreibe {rest}"
+    if lowered.startswith(("sende datei ", "schick datei ")):
+        rest = re.sub(r"^(sende|schick) datei\s+", "", stripped, flags=re.IGNORECASE)
+        return f"datei sende {rest}"
+    if lowered.startswith("lies datei "):
+        rest = re.sub(r"^lies datei\s+", "", stripped, flags=re.IGNORECASE)
+        return f"datei lies {rest}"
+    return stripped

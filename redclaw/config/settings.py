@@ -26,6 +26,8 @@ class Settings:
     workspace: Path = Path("/home/pi/redclaw_workspace")
     allowed_paths: list[Path] = field(default_factory=lambda: [Path("/home/pi/redclaw_workspace")])
     discord_user_id: str = ""
+    discord_test_user_id: str = ""
+    discord_allow_test_bots: bool = False
     discord_token: str = ""
     brave_search_api_key: str = ""
     nvidia_nim_api_key: str = ""
@@ -75,6 +77,8 @@ class Settings:
             workspace=workspace,
             allowed_paths=_split_paths(allowed_raw),
             discord_user_id=str(os.getenv("REDSCRAFTER_DISCORD_ID", discord.get("user_id", ""))),
+            discord_test_user_id=str(os.getenv("DISCORD_TEST_USER_ID", discord.get("test_user_id", ""))),
+            discord_allow_test_bots=str(os.getenv("DISCORD_ALLOW_TEST_BOTS", discord.get("allow_test_bots", False))).lower() in {"1", "true", "yes", "on"},
             discord_token=os.getenv("DISCORD_TOKEN", discord.get("token", "")),
             brave_search_api_key=os.getenv("BRAVE_SEARCH_API_KEY", api.get("brave_search_api_key", "")),
             nvidia_nim_api_key=os.getenv("NVIDIA_NIM_API_KEY", api.get("nvidia_nim_api_key", "")),

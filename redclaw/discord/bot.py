@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 from datetime import datetime
 import logging
+from pathlib import Path
 
 import discord
 
@@ -23,23 +24,29 @@ class RedClawClient(discord.Client):
             self._reminder_task = asyncio.create_task(self._reminder_loop())
 
     async def on_message(self, message: discord.Message) -> None:
-        if message.author.bot:
-            return
         is_dm = isinstance(message.channel, discord.DMChannel)
-        allowed_user = str(message.author.id) == str(runtime.settings.discord_user_id)
-        if not is_dm or not allowed_user:
+        author_id = str(message.author.id)
+        allowed_user = author_id == str(runtime.settings.discord_user_id)
+        allowed_test_bot = (
+            message.author.bot
+            and runtime.settings.discord_allow_test_bots
+            and author_id == str(runtime.settings.discord_test_user_id)
+        )
+        if message.author.bot and not allowed_test_bot:
+            return
+        if not is_dm or not (allowed_user or allowed_test_bot):
             runtime.logger.log(
                 "warn",
                 "security",
                 "Discord-Nachricht ignoriert",
-                {"author_id": str(message.author.id), "is_dm": is_dm},
+                {"author_id": author_id, "is_dm": is_dm},
             )
             log.warning("Discord-Nachricht ignoriert: author_id=%s is_dm=%s", message.author.id, is_dm)
             return
-        log.info("Discord-DM von Redcrafter empfangen")
+        log.info("Discord-DM von erlaubtem Absender empfangen")
         async with message.channel.typing():
             answer = await runtime.agent.handle_message(message.content, source="discord")
-        await message.channel.send(answer[:1900])
+        await _send_answer(message.channel, answer)
 
     async def _reminder_loop(self) -> None:
         await self.wait_until_ready()
@@ -64,6 +71,38 @@ async def main() -> None:
     intents.message_content = True
     client = RedClawClient(intents=intents)
     await client.start(runtime.settings.discord_token)
+
+
+async def _send_answer(channel: discord.abc.Messageable, answer: str) -> None:
+    attachment_paths: list[Path] = []
+    visible_lines: list[str] = []
+    for line in answer.splitlines():
+        if line.startswith("__REDCLAW_ATTACH__:"):
+            attachment_paths.append(Path(line.split(":", 1)[1].strip()))
+        else:
+            visible_lines.append(line)
+    visible = "\n".join(visible_lines).strip() or "Erledigt."
+    for chunk in _discord_chunks(visible):
+        await channel.send(chunk)
+    for path in attachment_paths:
+        if path.exists() and path.is_file():
+            await channel.send(file=discord.File(path))
+
+
+def _discord_chunks(text: str, size: int = 1900) -> list[str]:
+    if len(text) <= size:
+        return [text]
+    chunks: list[str] = []
+    current = ""
+    for line in text.splitlines():
+        if len(current) + len(line) + 1 > size:
+            chunks.append(current)
+            current = line
+        else:
+            current = f"{current}\n{line}".strip()
+    if current:
+        chunks.append(current)
+    return chunks
 
 
 if __name__ == "__main__":

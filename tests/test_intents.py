@@ -13,3 +13,8 @@ def test_nim_intent():
 
 def test_skill_builder_intent():
     assert detect_intent("Skill erstellen für Kalender").name == "skill_builder"
+
+
+def test_natural_file_intent():
+    assert detect_intent("erstelle datei /tmp/a.txt :: hi").name == "files"
+    assert detect_intent("sende datei /tmp/a.txt").name == "files"
