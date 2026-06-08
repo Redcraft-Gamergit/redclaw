@@ -12,7 +12,7 @@ services:
       - ./config:/app/config
       - ./redclaw/skills:/app/redclaw/skills
       - ${REDCLAW_WORKSPACE:-/home/pi/redclaw_workspace}:${REDCLAW_WORKSPACE:-/home/pi/redclaw_workspace}
-      - ${CODEX_HOME_HOST:-/home/redcraft/.codex}:/root/.codex:ro
+      - ${CODEX_HOME_HOST:-/home/redcraft/.codex}:/root/.codex
       - /var/run/docker.sock:/var/run/docker.sock
     restart: unless-stopped
 
@@ -27,7 +27,7 @@ services:
       - ./config:/app/config
       - ./redclaw/skills:/app/redclaw/skills
       - ${REDCLAW_WORKSPACE:-/home/pi/redclaw_workspace}:${REDCLAW_WORKSPACE:-/home/pi/redclaw_workspace}
-      - ${CODEX_HOME_HOST:-/home/redcraft/.codex}:/root/.codex:ro
+      - ${CODEX_HOME_HOST:-/home/redcraft/.codex}:/root/.codex
     restart: unless-stopped
     depends_on:
       - web
@@ -43,6 +43,6 @@ services:
       - ./config:/app/config
       - ./redclaw/skills:/app/redclaw/skills
       - ${REDCLAW_WORKSPACE:-/home/pi/redclaw_workspace}:${REDCLAW_WORKSPACE:-/home/pi/redclaw_workspace}
-      - ${CODEX_HOME_HOST:-/home/redcraft/.codex}:/root/.codex:ro
+      - ${CODEX_HOME_HOST:-/home/redcraft/.codex}:/root/.codex
       - /var/run/docker.sock:/var/run/docker.sock
     restart: "no"
