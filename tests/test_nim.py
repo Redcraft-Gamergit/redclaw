@@ -6,6 +6,12 @@ from types import SimpleNamespace
 from redclaw.skills import skill_nim
 
 
+def reset_nim_state():
+    skill_nim._consecutive_failures = 0
+    skill_nim._circuit_open_until = 0
+    skill_nim._request_times.clear()
+
+
 class FakeMemoryItem:
     def __init__(self, category, value):
         self.category = category
@@ -47,6 +53,7 @@ def make_context():
         nvidia_nim_base_url="https://example.test/v1",
         nvidia_nim_model="test-model",
         nvidia_nim_max_tokens=16384,
+        nvidia_nim_context_window=0,
         nvidia_nim_temperature=1.0,
         nvidia_nim_top_p=0.95,
         nvidia_nim_enable_thinking=True,
@@ -67,6 +74,7 @@ def make_context():
 
 
 def test_nim_uses_fast_payload_for_normal_questions(monkeypatch):
+    reset_nim_state()
     FakeClient.payloads = []
     monkeypatch.setattr(skill_nim.httpx, "AsyncClient", FakeClient)
 
@@ -78,16 +86,18 @@ def test_nim_uses_fast_payload_for_normal_questions(monkeypatch):
 
 
 def test_nim_allows_long_payload_for_explicit_long_answers(monkeypatch):
+    reset_nim_state()
     FakeClient.payloads = []
     monkeypatch.setattr(skill_nim.httpx, "AsyncClient", FakeClient)
 
     asyncio.run(skill_nim.run("erkläre das ausführlich", make_context()))
 
-    assert FakeClient.payloads[0]["max_tokens"] == 16384
+    assert FakeClient.payloads[0]["max_tokens"] <= 8192
     assert FakeClient.payloads[0]["chat_template_kwargs"] == {"enable_thinking": True}
 
 
 def test_nim_includes_memory_context(monkeypatch):
+    reset_nim_state()
     FakeClient.payloads = []
     monkeypatch.setattr(skill_nim.httpx, "AsyncClient", FakeClient)
 
@@ -100,6 +110,7 @@ def test_nim_includes_memory_context(monkeypatch):
 
 
 def test_nim_retries_rate_limited_requests(monkeypatch):
+    reset_nim_state()
     class RetryResponse(FakeResponse):
         calls = 0
 
@@ -131,8 +142,7 @@ def test_nim_retries_rate_limited_requests(monkeypatch):
 
 
 def test_nim_circuit_breaker_after_failures(monkeypatch):
-    skill_nim._consecutive_failures = 0
-    skill_nim._circuit_open_until = 0
+    reset_nim_state()
 
     class FailingResponse(FakeResponse):
         status_code = 503
@@ -156,3 +166,59 @@ def test_nim_circuit_breaker_after_failures(monkeypatch):
 
     answer = asyncio.run(skill_nim.run("NIM test", context))
     assert "Cooldown" in answer
+
+
+def test_nim_uses_configured_context_window_for_safe_max_tokens(monkeypatch):
+    reset_nim_state()
+    FakeClient.payloads = []
+    monkeypatch.setattr(skill_nim.httpx, "AsyncClient", FakeClient)
+    context = make_context()
+    context.settings.nvidia_nim_context_window = 4096
+    context.settings.nvidia_nim_max_tokens = 4096
+
+    asyncio.run(skill_nim.run("NIM " + ("x" * 6000), context))
+
+    assert 128 <= FakeClient.payloads[0]["max_tokens"] < 4096
+
+
+def test_nim_context_error_retries_with_smaller_payload(monkeypatch):
+    reset_nim_state()
+    class ContextResponse(FakeResponse):
+        calls = 0
+
+        def __init__(self, status_code):
+            self.status_code = status_code
+            self.headers = {}
+            self.text = "context_length_exceeded"
+
+        def json(self):
+            return {"choices": [{"message": {"content": "context-retry-ok"}}]}
+
+        def raise_for_status(self):
+            if self.status_code >= 400:
+                request = httpx.Request("POST", "https://example.test")
+                raise httpx.HTTPStatusError("error", request=request, response=httpx.Response(self.status_code, request=request, text=self.text))
+
+    class ContextClient(FakeClient):
+        async def post(self, endpoint, headers, json):
+            ContextResponse.calls += 1
+            self.payloads.append(json)
+            return ContextResponse(400 if ContextResponse.calls == 1 else 200)
+
+    import httpx
+
+    FakeClient.payloads = []
+    monkeypatch.setattr(skill_nim.httpx, "AsyncClient", ContextClient)
+    answer = asyncio.run(skill_nim.run("NIM test", make_context()))
+
+    assert answer == "context-retry-ok"
+    assert ContextResponse.calls == 2
+    assert FakeClient.payloads[1]["max_tokens"] <= 512
+    assert "Kontext wurde wegen Modelllimit gekuerzt" in FakeClient.payloads[1]["messages"][0]["content"]
+
+
+def test_nim_model_context_window_heuristics():
+    assert skill_nim._context_window_for_model("meta/llama-3-70b-instruct") == 8192
+    assert skill_nim._context_window_for_model("nvidia/nemotron-4-15b") == 16384
+    assert skill_nim._context_window_for_model("cohere/command-r-plus") == 32768
+    assert skill_nim._context_window_for_model("anything", configured=12000) == 12000

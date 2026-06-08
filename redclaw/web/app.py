@@ -156,6 +156,7 @@ async def save_config(
     nvidia_nim_base_url: str = Form("https://integrate.api.nvidia.com/v1"),
     nvidia_nim_model: str = Form("nvidia/llama-3.3-nemotron-super-49b-v1.5"),
     nvidia_nim_max_tokens: int = Form(4096),
+    nvidia_nim_context_window: int = Form(0),
     nvidia_nim_temperature: float = Form(0.7),
     nvidia_nim_top_p: float = Form(0.95),
     nvidia_nim_enable_thinking: str = Form("off"),
@@ -187,6 +188,7 @@ async def save_config(
             "nvidia_nim_base_url": nvidia_nim_base_url,
             "nvidia_nim_model": nvidia_nim_model,
             "nvidia_nim_max_tokens": nvidia_nim_max_tokens,
+            "nvidia_nim_context_window": nvidia_nim_context_window,
             "nvidia_nim_temperature": nvidia_nim_temperature,
             "nvidia_nim_top_p": nvidia_nim_top_p,
             "nvidia_nim_enable_thinking": nvidia_nim_enable_thinking == "on",
@@ -203,6 +205,7 @@ async def save_config(
     runtime.settings.nvidia_nim_base_url = nvidia_nim_base_url
     runtime.settings.nvidia_nim_model = nvidia_nim_model
     runtime.settings.nvidia_nim_max_tokens = nvidia_nim_max_tokens
+    runtime.settings.nvidia_nim_context_window = nvidia_nim_context_window
     runtime.settings.nvidia_nim_temperature = nvidia_nim_temperature
     runtime.settings.nvidia_nim_top_p = nvidia_nim_top_p
     runtime.settings.nvidia_nim_enable_thinking = nvidia_nim_enable_thinking == "on"

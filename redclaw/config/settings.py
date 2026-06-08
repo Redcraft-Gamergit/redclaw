@@ -35,6 +35,7 @@ class Settings:
     nvidia_nim_base_url: str = "https://integrate.api.nvidia.com/v1"
     nvidia_nim_model: str = "nvidia/llama-3.3-nemotron-super-49b-v1.5"
     nvidia_nim_max_tokens: int = 4096
+    nvidia_nim_context_window: int = 0
     nvidia_nim_temperature: float = 0.7
     nvidia_nim_top_p: float = 0.95
     nvidia_nim_enable_thinking: bool = False
@@ -88,6 +89,7 @@ class Settings:
             nvidia_nim_base_url=os.getenv("NVIDIA_NIM_BASE_URL", api.get("nvidia_nim_base_url", "https://integrate.api.nvidia.com/v1")),
             nvidia_nim_model=os.getenv("NVIDIA_NIM_MODEL", api.get("nvidia_nim_model", "nvidia/llama-3.3-nemotron-super-49b-v1.5")),
             nvidia_nim_max_tokens=int(os.getenv("NVIDIA_NIM_MAX_TOKENS", api.get("nvidia_nim_max_tokens", 4096))),
+            nvidia_nim_context_window=int(os.getenv("NVIDIA_NIM_CONTEXT_WINDOW", api.get("nvidia_nim_context_window", 0))),
             nvidia_nim_temperature=float(os.getenv("NVIDIA_NIM_TEMPERATURE", api.get("nvidia_nim_temperature", 0.7))),
             nvidia_nim_top_p=float(os.getenv("NVIDIA_NIM_TOP_P", api.get("nvidia_nim_top_p", 0.95))),
             nvidia_nim_enable_thinking=str(os.getenv("NVIDIA_NIM_ENABLE_THINKING", api.get("nvidia_nim_enable_thinking", False))).lower() in {"1", "true", "yes", "on"},

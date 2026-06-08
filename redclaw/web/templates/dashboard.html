@@ -256,6 +256,7 @@
             <label>NVIDIA NIM Base URL<input name="nvidia_nim_base_url" value="{{ settings.nvidia_nim_base_url }}"></label>
             <label>NVIDIA NIM Modell<input name="nvidia_nim_model" value="{{ settings.nvidia_nim_model }}"></label>
             <label>NIM Max Tokens<input name="nvidia_nim_max_tokens" value="{{ settings.nvidia_nim_max_tokens }}" type="number" min="1"></label>
+            <label>NIM Context Window<input name="nvidia_nim_context_window" value="{{ settings.nvidia_nim_context_window }}" type="number" min="0" placeholder="0 = auto"></label>
             <label>NIM Temperature<input name="nvidia_nim_temperature" value="{{ settings.nvidia_nim_temperature }}" type="number" min="0" max="2" step="0.01"></label>
             <label>NIM Top P<input name="nvidia_nim_top_p" value="{{ settings.nvidia_nim_top_p }}" type="number" min="0" max="1" step="0.01"></label>
             <label>NIM Timeout Sekunden<input name="nvidia_nim_timeout" value="{{ settings.nvidia_nim_timeout }}" type="number" min="5"></label>

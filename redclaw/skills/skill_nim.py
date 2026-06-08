@@ -36,25 +36,35 @@ async def run(query, context):
         word in lowered_prompt
         for word in ("ausfuehrlich", "ausführlich", "detail", "lange antwort", "lang erklaeren", "lang erklären", "essay", "komplett")
     )
-    max_tokens = context.settings.nvidia_nim_max_tokens if wants_long_answer else min(context.settings.nvidia_nim_max_tokens, 768)
     enable_thinking = context.settings.nvidia_nim_enable_thinking and wants_long_answer
     memory_context = _build_memory_context(prompt, context)
+    context_window = _context_window_for_model(
+        context.settings.nvidia_nim_model,
+        int(getattr(context.settings, "nvidia_nim_context_window", 0)),
+    )
 
     endpoint = context.settings.nvidia_nim_base_url.rstrip("/") + "/chat/completions"
+    messages = [
+        {
+            "role": "system",
+            "content": (
+                "Du bist RedClaw, ein knapper deutscher Assistent fuer Redcrafter. "
+                "Nutze den Memory-Kontext, um dich an fruehere Nachrichten, Themen und Dateiorte zu erinnern. "
+                "Wenn du eine Datei erwaehnst, nenne den bekannten Pfad. Antworte direkt, klar und ohne lange Vorrede."
+                f"\n\n{memory_context}"
+            ),
+        },
+        {"role": "user", "content": prompt},
+    ]
+    max_tokens = _safe_max_tokens(
+        messages,
+        requested=context.settings.nvidia_nim_max_tokens,
+        context_window=context_window,
+        wants_long_answer=wants_long_answer,
+    )
     payload: dict[str, Any] = {
         "model": context.settings.nvidia_nim_model,
-        "messages": [
-            {
-                "role": "system",
-                "content": (
-                    "Du bist RedClaw, ein knapper deutscher Assistent fuer Redcrafter. "
-                    "Nutze den Memory-Kontext, um dich an fruehere Nachrichten, Themen und Dateiorte zu erinnern. "
-                    "Wenn du eine Datei erwaehnst, nenne den bekannten Pfad. Antworte direkt, klar und ohne lange Vorrede."
-                    f"\n\n{memory_context}"
-                ),
-            },
-            {"role": "user", "content": prompt},
-        ],
+        "messages": messages,
         "temperature": context.settings.nvidia_nim_temperature,
         "top_p": context.settings.nvidia_nim_top_p,
         "max_tokens": max_tokens,
@@ -72,7 +82,7 @@ async def run(query, context):
     try:
         await _wait_for_rate_slot(max(1, int(getattr(context.settings, "nvidia_nim_rpm_limit", 36))))
         async with httpx.AsyncClient(timeout=timeout) as client:
-            data = await _post_with_retries(client, endpoint, headers, payload)
+            data = await _post_with_retries(client, endpoint, headers, payload, allow_context_retry=True)
     except httpx.TimeoutException:
         _mark_failure()
         return "NVIDIA NIM war zu langsam. Ich habe abgebrochen, damit RedClaw nicht haengt. Nutze eine kuerzere Frage oder deaktiviere Thinking."
@@ -83,6 +93,8 @@ async def run(query, context):
             return "NVIDIA NIM lehnt den API-Key ab (401). Pruefe den Key in der Web-Config."
         if status == 429:
             return "NVIDIA NIM ist rate-limited. Ich warte automatisch, aber diese Anfrage wurde abgelehnt."
+        if _is_context_length_error(exc.response):
+            return "NVIDIA NIM sagt, dass der Kontext zu gross ist. Ich habe den Memory-Kontext schon begrenzt; stelle im Dashboard ein kleineres Context Window oder weniger Max Tokens ein."
         if status in {500, 502, 503, 504}:
             return f"NVIDIA NIM ist gerade instabil ({status}). Versuche es gleich nochmal oder nutze eine kuerzere Anfrage."
         return f"NVIDIA NIM Fehler {status}: {_safe_error_text(exc.response)}"
@@ -109,10 +121,21 @@ async def _wait_for_rate_slot(rpm_limit: int) -> None:
         _request_times.append(now)
 
 
-async def _post_with_retries(client: httpx.AsyncClient, endpoint: str, headers: dict[str, str], payload: dict[str, Any]) -> dict[str, Any]:
+async def _post_with_retries(
+    client: httpx.AsyncClient,
+    endpoint: str,
+    headers: dict[str, str],
+    payload: dict[str, Any],
+    allow_context_retry: bool = False,
+) -> dict[str, Any]:
     retry_statuses = {408, 429, 500, 502, 503, 504}
+    context_retry_used = False
     for attempt in range(3):
         response = await client.post(endpoint, headers=headers, json=payload)
+        if allow_context_retry and not context_retry_used and _is_context_length_error(response):
+            context_retry_used = True
+            payload = _shrink_payload_for_context_retry(payload)
+            continue
         if response.status_code not in retry_statuses:
             response.raise_for_status()
             return response.json()
@@ -130,6 +153,52 @@ def _retry_delay(response: httpx.Response, attempt: int) -> float:
         except ValueError:
             pass
     return min(2.0 * (attempt + 1), 8.0)
+
+
+def _context_window_for_model(model: str, configured: int = 0) -> int:
+    if configured > 0:
+        return configured
+    lowered = model.lower()
+    if any(name in lowered for name in ("command-r", "command_r", "32k")):
+        return 32768
+    if any(name in lowered for name in ("nemotron", "15b", "16k")):
+        return 16384
+    if any(name in lowered for name in ("llama3", "llama-3", "mistral", "8k")):
+        return 8192
+    return 8192
+
+
+def _safe_max_tokens(messages: list[dict[str, str]], requested: int, context_window: int, wants_long_answer: bool) -> int:
+    prompt_tokens = _estimate_message_tokens(messages)
+    reserve = 384
+    available = max(128, context_window - prompt_tokens - reserve)
+    default_cap = requested if wants_long_answer else min(requested, 768)
+    return max(128, min(default_cap, available))
+
+
+def _estimate_message_tokens(messages: list[dict[str, str]]) -> int:
+    # Conservative approximation for mixed German/English chat text.
+    chars = sum(len(str(message.get("content", ""))) for message in messages)
+    return max(1, (chars + 2) // 3) + (len(messages) * 4)
+
+
+def _is_context_length_error(response: httpx.Response) -> bool:
+    if response.status_code not in {400, 413, 422}:
+        return False
+    text = response.text.lower()
+    return any(marker in text for marker in ("context_length_exceeded", "context length", "maximum context", "too many tokens", "token limit"))
+
+
+def _shrink_payload_for_context_retry(payload: dict[str, Any]) -> dict[str, Any]:
+    shrunk = dict(payload)
+    messages = [dict(message) for message in payload.get("messages", [])]
+    if messages and messages[0].get("role") == "system":
+        content = str(messages[0].get("content", ""))
+        head = content.split("Memory-Kontext:", 1)[0].strip()
+        messages[0]["content"] = head + "\n\nMemory-Kontext:\n- Kontext wurde wegen Modelllimit gekuerzt."
+    shrunk["messages"] = messages
+    shrunk["max_tokens"] = max(128, min(int(payload.get("max_tokens", 512)), 512))
+    return shrunk
 
 
 def _mark_failure() -> None:
